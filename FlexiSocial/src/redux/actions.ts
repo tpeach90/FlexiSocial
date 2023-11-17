@@ -1,4 +1,5 @@
-import { Action, ScreenStackOptions } from "./reducer";
+import { ScreenStackOptions } from "../utils/types";
+import { Action } from "./reducer";
 
 
 

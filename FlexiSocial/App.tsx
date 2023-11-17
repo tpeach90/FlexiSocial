@@ -12,7 +12,7 @@ import { Provider } from 'react-redux';
 import { AuthProvider } from './src/context/AuthContext';
 import AppNav from './src/navigation/AppNav';
 import { PersistGate } from 'redux-persist/integration/react';
-import persistentStore from "./src/redux/persistentStore"
+import persistentStore from "./src/redux/store"
 import { Text } from 'react-native';
 const { store, persistor } = persistentStore();
 

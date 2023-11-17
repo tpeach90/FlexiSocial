@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 // import { State } from "../redux/reducer";
 import AppStack from "./AppStack";
 import { State } from "../redux/reducer";
+import DebugStack from "./DebugStack";
 
 
 
@@ -26,7 +27,8 @@ export default function AppNav() {
             {
                 // display the stack specified by the redux     
                 screenStack == "app" ? <AppStack/> :
-                screenStack == "auth" ? <AuthStack/>
+                screenStack == "auth" ? <AuthStack/> :
+                screenStack == "debug" ? <DebugStack/>
                 : undefined
             }
         </NavigationContainer>

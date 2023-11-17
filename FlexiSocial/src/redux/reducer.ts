@@ -2,6 +2,7 @@
 // type of all possible redux states the app can be in
 
 import { combineReducers } from "@reduxjs/toolkit"
+import { ScreenStackOptions } from "../utils/types"
 
 
 // all actions that the reducer implements.
@@ -19,11 +20,6 @@ export type Action = {
 }
 
 
-
-
-export type ScreenStackOptions = "app" | "auth" | "loading"
-
-
 // typing of the state.
 export type StatePersistentSlice = {
     userToken: string | null
@@ -33,7 +29,7 @@ export type StateNonPersistentSlice = {
 }
 export type State = {
     nonPersistent : StateNonPersistentSlice
-    persistent: StateNonPersistentSlice,
+    persistent: StatePersistentSlice,
 }
 
 

@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/KronaOne-Regular.ttf",
+      "sha1": "5e5fc620063840e5434fe57d990ef978d479139b"
+    },
+    {
+      "path": "src/assets/fonts/Lalezar-Regular.ttf",
+      "sha1": "3208f0656811880a6d20dff1edab27beb55ffde9"
+    }
+  ]
+}

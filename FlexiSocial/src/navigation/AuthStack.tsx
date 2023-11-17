@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "./param_lists";
+import { AuthStackParamList } from "./paramLists";
 import { Welcome } from "../assets/screens/Welcome";
+import { Login } from "../assets/screens/Login";
 
 
 export default function AuthStack() : React.JSX.Element {
@@ -14,6 +15,7 @@ export default function AuthStack() : React.JSX.Element {
             screenOptions={{ headerShown: false }}
         >
             <stack.Screen name="Welcome" component={Welcome} />
+            <stack.Screen name="Login" component={Login} />
         </stack.Navigator>
     )
     
