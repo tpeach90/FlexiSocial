@@ -40,7 +40,7 @@ const initialPersistentState: StatePersistentSlice = {
     userToken: null
 };
 const initialNonPersistentState : StateNonPersistentSlice = {
-    screenStack: "auth",
+    screenStack: "app",
 }
 
 
