@@ -3,6 +3,7 @@
 
 import { combineReducers } from "@reduxjs/toolkit"
 import { ScreenStackOptions } from "../utils/types"
+import { StateNonPersistentSlice, StatePersistentSlice, initialNonPersistentState, initialPersistentState } from "./state"
 
 
 // all actions that the reducer implements.
@@ -17,30 +18,10 @@ export type Action = {
     payload: {
         value: ScreenStackOptions | null
     }
-}
-
-
-// typing of the state.
-export type StatePersistentSlice = {
-    userToken: string | null
-}
-export type StateNonPersistentSlice = {
-    screenStack: ScreenStackOptions | null
-}
-export type State = {
-    nonPersistent : StateNonPersistentSlice
-    persistent: StatePersistentSlice,
-}
-
-
-
-
-// initial state
-const initialPersistentState: StatePersistentSlice = {
-    userToken: null
-};
-const initialNonPersistentState : StateNonPersistentSlice = {
-    screenStack: "app",
+} |
+{
+    type: "setMapScreenToggle",
+    payload: Partial<StatePersistentSlice["mapScreen"]["toggles"]>
 }
 
 
@@ -78,6 +59,18 @@ function persistentReducer(state: StatePersistentSlice = initialPersistentState,
             return {
                 ...state,
                 userToken: action.payload.value
+            }
+        
+        case "setMapScreenToggle":
+            return {
+                ...state,
+                mapScreen: {
+                    ...state.mapScreen,
+                    toggles : {
+                        ...state.mapScreen.toggles,
+                        ...action.payload
+                    }
+                }
             }
 
         default: return state;

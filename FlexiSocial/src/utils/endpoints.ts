@@ -1,5 +1,5 @@
 import { jsonToGraphQLQuery } from "json-to-graphql-query";
-import { backendURL } from "./config";
+import { backendURL } from "../config/config";
 import { UserInfo } from "./types";
 
 

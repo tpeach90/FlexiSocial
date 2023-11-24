@@ -24,6 +24,7 @@ export default () => {
     })
 
     let persistor = persistStore(store);
+    // persistor.purge();
 
     return {store, persistor};
 }

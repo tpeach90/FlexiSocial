@@ -7,3 +7,7 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
     MapScreen: undefined
 }
+
+export type DebugStackParamList = {
+    DebugScreen: undefined
+}

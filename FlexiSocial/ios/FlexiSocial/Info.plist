@@ -55,6 +55,15 @@
 	<array>
 		<string>KronaOne-Regular.ttf</string>
 		<string>Lalezar-Regular.ttf</string>
+		<string>EncodeSansSemiCondensed-Black.ttf</string>
+		<string>EncodeSansSemiCondensed-Bold.ttf</string>
+		<string>EncodeSansSemiCondensed-ExtraBold.ttf</string>
+		<string>EncodeSansSemiCondensed-ExtraLight.ttf</string>
+		<string>EncodeSansSemiCondensed-Light.ttf</string>
+		<string>EncodeSansSemiCondensed-Medium.ttf</string>
+		<string>EncodeSansSemiCondensed-Regular.ttf</string>
+		<string>EncodeSansSemiCondensed-SemiBold.ttf</string>
+		<string>EncodeSansSemiCondensed-Thin.ttf</string>
 	</array>
 </dict>
 </plist>

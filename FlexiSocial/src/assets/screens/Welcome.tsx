@@ -2,7 +2,7 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-naviga
 import { AuthStackParamList } from "../../navigation/paramLists";
 import { Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
-import { colors } from "../../utils/config";
+import { colors } from "../../config/config";
 import { Shadow } from "react-native-shadow-2";
 import { useNavigation } from "@react-navigation/native";
 

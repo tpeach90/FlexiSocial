@@ -1,5 +1,5 @@
 import { ScreenStackOptions } from "../utils/types";
-import { Action } from "./reducer";
+import { Action, StatePersistentSlice } from "./reducer";
 
 
 
@@ -24,5 +24,17 @@ export function setScreenStack(value: ScreenStackOptions | null) : Action {
     return {
         type: "setScreenStack",
         payload: {value}
+    }
+}
+
+/**
+ * alter zero or more of the toggles on the map screen
+ * @param values 
+ * @returns 
+ */
+export function setMapScreenToggle(values: Partial<StatePersistentSlice["mapScreen"]["toggles"]>) :Action {
+    return {
+        type: "setMapScreenToggle",
+        payload: values
     }
 }

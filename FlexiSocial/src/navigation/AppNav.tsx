@@ -2,10 +2,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { ActivityIndicator, Text, View } from "react-native";
 import AuthStack from "./AuthStack";
 import { useSelector } from "react-redux";
-// import { State } from "../redux/reducer";
 import AppStack from "./AppStack";
-import { State } from "../redux/reducer";
 import DebugStack from "./DebugStack";
+import { State } from "../redux/state";
 
 
 

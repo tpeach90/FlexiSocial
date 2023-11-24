@@ -2,12 +2,52 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Black.ttf",
+      "sha1": "9d4476519a1ff15c7a753afc9e5fafd3a918f4b6"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Bold.ttf",
+      "sha1": "39902bfafbb70c8d1510dfe21ba27c2ada33d9ba"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-ExtraBold.ttf",
+      "sha1": "6891af91e3dc8ff682447888296b6b82e59ebd15"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-ExtraLight.ttf",
+      "sha1": "a60b47d606c435ca0c2ef4ed5b3a0af6ab29944f"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Light.ttf",
+      "sha1": "f5fa112db7559d98dffda61370e24c9e1b4d43bf"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Medium.ttf",
+      "sha1": "75bf35ce38a24ea331d4ffa62781f7ec394e4027"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Regular.ttf",
+      "sha1": "822b37ec1f1f92248e1efe036afd1502c3de3329"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-SemiBold.ttf",
+      "sha1": "545cb6bc8cef403162341524d56881f3ec8ca177"
+    },
+    {
+      "path": "src/assets/fonts/EncodeSansSemiCondensed-Thin.ttf",
+      "sha1": "a8f27c14b35c3cb6a8079ed171d7f76e243b26a0"
+    },
+    {
       "path": "src/assets/fonts/KronaOne-Regular.ttf",
       "sha1": "5e5fc620063840e5434fe57d990ef978d479139b"
     },
     {
       "path": "src/assets/fonts/Lalezar-Regular.ttf",
       "sha1": "3208f0656811880a6d20dff1edab27beb55ffde9"
+    },
+    {
+      "path": "src/assets/fonts/OFL.txt",
+      "sha1": "678c5156111d6ab8e92cd1ca81240534168cd153"
     }
   ]
 }
