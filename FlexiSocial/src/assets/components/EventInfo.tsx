@@ -6,6 +6,7 @@ import { colors, universalStyles } from "../../config/config";
 import { State } from "../../redux/state";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, faPen, faPerson, faQuestion, faXmark } from "@fortawesome/free-solid-svg-icons";
+import LargeButton from "./LargeButton";
 
 
 interface EventInfoProps {
@@ -102,12 +103,8 @@ export default function EventInfo(props: EventInfoProps) {
             </View>
             
             <View style={styles.largeButtonsContainer} >
-                <TouchableOpacity style={styles.button} onPress={imGoingPressed}>
-                    <Text style={styles.buttonText}>I'm going!</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={imInterestedPressed}>
-                    <Text style={styles.buttonText}>I'm interested</Text>
-                </TouchableOpacity>
+                <LargeButton onPress={imGoingPressed} text="I'm going!" />
+                <LargeButton onPress={imInterestedPressed} text="I'm interested" />
             </View>
 
         </View>

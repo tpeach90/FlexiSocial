@@ -1,5 +1,5 @@
 import { Animated, Pressable, StyleSheet, Text, Touchable, TouchableOpacity, View, ViewStyle } from "react-native"
-import { colors } from "../../config/config"
+import { colors, fonts } from "../../config/config"
 import { useEffect, useRef, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 import { faX, faXmark } from "@fortawesome/free-solid-svg-icons"
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     },
 
     labelText: {
-        fontFamily: "Lalezar-Regular",
+        fontFamily: fonts.secondary.regular,
         marginRight:10
     },
     labelTextEnabled: {

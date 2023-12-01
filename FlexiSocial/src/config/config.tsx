@@ -12,21 +12,34 @@ export const colors = {
     background: "#FFF"
 }
 
+export const fonts = {
+    primary: {
+        bold: "EncodeSansSemiCondensed-Bold",
+        regular: "EncodeSansSemiCondensed-Regular"
+    },
+    secondary: {
+        regular: "Lalezar-Regular"
+    },
+    tertiary: {
+        regular: "KronaOne-Regular"
+    }
+}
+
 
 
 export const universalStyles = StyleSheet.create({
     h1: {
-        fontFamily: "EncodeSansSemiCondensed-Bold",
-        fontSize:20,
+        fontFamily: fonts.primary.bold,
+        fontSize:18,
         color:colors.black
     },
     h2: {
-        fontFamily: "EncodeSansSemiCondensed-Bold",
-        fontSize: 16,
+        fontFamily: fonts.primary.bold,
+        fontSize: 14,
         color:colors.black
     },
     p: {
-        fontFamily: "EncodeSansSemiCondensed-Regular",
+        fontFamily: fonts.primary.regular,
         fontSize: 12,
         color: colors.black
     }

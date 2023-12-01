@@ -2,7 +2,7 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-naviga
 import { AuthStackParamList } from "../../navigation/paramLists";
 import { Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
-import { colors } from "../../config/config";
+import { colors, fonts } from "../../config/config";
 import { Shadow } from "react-native-shadow-2";
 import { useNavigation } from "@react-navigation/native";
 
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     },
     h1: {
         fontSize: 14,
-        fontFamily:"KronaOne-Regular",
+        fontFamily:fonts.tertiary.regular,
         color: colors.black
     },
 
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     },
     buttonFont: {
         alignSelf:"center",
-        fontFamily: "Lalezar-Regular",
+        fontFamily: fonts.secondary.regular,
         color: colors.black
     },
 

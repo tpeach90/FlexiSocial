@@ -8,6 +8,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import TagButton from "../components/TagButton";
 import { setMapScreenToggle } from "../../redux/actions";
 import MapScreenTagBar from "../components/MapScreenTagBar";
+import EventInfo from "../components/EventInfo";
+import EventFullInfoPanel from "../components/EventFullInfoPanel";
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
@@ -40,11 +42,16 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
             </MapView>
 
 
+
             <SafeAreaView 
                 pointerEvents="box-none" // allows users to interact with the map behind this view.
                 style={StyleSheet.absoluteFillObject}
             >   
                 <MapScreenTagBar/>
+
+                {/* <View style={StyleSheet.absoluteFillObject}>
+                    <EventFullInfoPanel />
+                </View> */}
 
             </SafeAreaView>
         </View>

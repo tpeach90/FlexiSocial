@@ -7,6 +7,7 @@ import { State } from "../../redux/state";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, faPen, faPerson, faQuestion, faXmark } from "@fortawesome/free-solid-svg-icons";
 import EventInfo from "./EventInfo";
+import EventChatShort from "./EventChatShort";
 
 
 interface EventFullInfoPanelProps {
@@ -14,8 +15,6 @@ interface EventFullInfoPanelProps {
 }
 
 /**
- * Outputs the main part of the event into including name, description, statistics, images.
- * Does not include event messages/comments panel.
  * @param props 
  * @returns 
  * @todo Goes off the bottom of the screen slightly when there is enough content for the scroll bar to be in use
@@ -30,7 +29,8 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
         >
             <View style={styles.background} />
             <View style={styles.panelContent} >
-                <EventInfo />
+                <EventInfo style={{padding:10}}/>
+                <EventChatShort/>
                 {/* <EventInfo />
                 <EventInfo /> */}
             </View>
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
 
     },
     panelContent: {
-        padding: 20
+        padding: 10
     },
     panelContainer: {
         overflow:"hidden",
