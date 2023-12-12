@@ -1,0 +1,11 @@
+start the database using:
+sudo systemctl start postgresql.service
+
+check status with:
+sudo systemctl status postgresql.service
+
+Use the postgres user to create the database.
+sudo -u postgres -i
+
+Open the sql terminal:
+psql

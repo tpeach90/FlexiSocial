@@ -1,0 +1,94 @@
+# this is a special type - another special type is Mutation..
+type Query {
+    user(id: Int): User
+    hello: String
+    me: User
+
+    events(
+        east: Float!, 
+        west: Float!, 
+        north: Float!, 
+        south: Float!, 
+        earliest: Timestamp!, 
+        latest: Timestamp!
+    ): [Event]
+
+    event(id:Int): Event
+},
+
+type Mutation {
+    signup(email: String!, password: String!, name: String!, age: Int!): AuthPayload
+    login(email: String!, password: String!): AuthPayload
+}
+
+enum YearsUnit {
+    HUMAN_YEARS
+    DOG_YEARS
+}
+
+scalar Interval
+
+type User {
+    id: Int!
+    displayName: String!
+    role: String!
+}
+
+type Event {
+    id: Int!
+    name: String!
+    description: String!
+    creator: User!
+    location: String!
+    capacity: Int # may be null.
+    lat: Float!
+    lon: Float!
+    time: Timestamp!
+    duration: Interval
+    chat: Chat!
+}
+
+type Chat {
+    eventID: Int!
+    event: Event! # id of the event to which the chat belongs.
+    count: Int! # total number of messages
+
+    messageQuery(
+
+        #---------------------
+        # first matches the earliest n messages that match the rest of the query
+        # last matches the latest.
+        # if both `first` and `last` are specified then `first` is ignored/.
+        # if neither are specified then the default is `last=10`.
+        #---------------------
+
+        first: Int # max number of messages to return
+        last: Int # max number of messages to return
+        fromTime: Timestamp # not inclusive
+        toTime: Timestamp # not inclusive
+        fromId: Int # overrides fromTime, not inclusive
+        toId: Int # overrides toTime, not inclusive
+
+    ) : ChatQueryResult!
+
+}
+
+type ChatQueryResult {
+    count: Int!
+    hasMore: Boolean! # true if some messages were omitted due to `first`/`last` restiction in the query
+    messages: [ChatMessage!]
+}
+
+type ChatMessage {
+    id: Int!
+    event: Event!
+    author: User!
+    time: Timestamp!
+    content: String!
+    reply: ChatMessage
+}
+
+type AuthPayload {
+  token: String
+  user: User
+}
