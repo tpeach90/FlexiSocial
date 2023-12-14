@@ -6,7 +6,7 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { getChatMessage, getChatMessageCount, getEvent, getUser, queryChatMessages } from './queries';
+import { getChatMessage, getChatMessageCount, getEvent, getEventStats, getUser, queryChatMessages } from './queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 
 // [] means list
@@ -52,7 +52,9 @@ export const schema = createSchema<GraphQLContext>({
 
             chat: (parent, _, context: GraphQLContext) => ({
                 eventId: parent.id
-            })
+            }),
+
+            stats: ({id}, {}, context) => getEventStats(id)
         },
 
         /**

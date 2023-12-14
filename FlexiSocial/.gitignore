@@ -69,3 +69,4 @@ yarn-error.log
 
 .vscode
 error.txt
+apollo.config.js

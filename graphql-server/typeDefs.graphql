@@ -45,7 +45,14 @@ type Event {
     lon: Float!
     time: Timestamp!
     duration: Interval
+    stats: EventStats!
     chat: Chat!
+}
+
+type EventStats {
+    goingCount: Int!
+    interestedCount: Int!
+    organizerCount: Int!
 }
 
 type Chat {

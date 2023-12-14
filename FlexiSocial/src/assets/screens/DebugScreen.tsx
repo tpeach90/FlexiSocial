@@ -20,7 +20,9 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
     return (
         <View style={[StyleSheet.absoluteFillObject, {backgroundColor:colors.secondary}]}>
 
-            <EventFullInfoPanel/>
+            <EventFullInfoPanel
+                eventId={1}
+            />
         </View>
     )
 

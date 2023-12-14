@@ -305,3 +305,45 @@ export async function getUser(id: number, context: GraphQLContext): Promise<User
         role: user[1]
     };
 }
+/**
+ * Get the number of people that are going to, interested in, and organizers of an event. Will return 0 for all fields if the queried event does not exist.
+ * @param id Event id
+ * @
+ * @todo Maybe this should return null if the event doesn't exist rather than 0 for everything.
+ * @returns 
+ */
+export async function getEventStats(id: number) {
+    
+    const query = `
+        SELECT 
+            Role, 
+            COUNT(*)
+        FROM UserEventRoles
+        WHERE eventId=$1
+        GROUP BY Role
+    `
+    const result = await connection.query(query, { params: [id] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    
+    const stats = {
+        going: 0,
+        interested:0,
+        organizer:0,
+        // if there are none of a certain type then the row won't show up in the query result.
+        // therefore overwrite default values of 0
+        ...Object.fromEntries(result.rows)
+    }
+
+    return {
+        goingCount: stats.going,
+        interestedCount: stats.interested,
+        organizerCount: stats.organizer
+    }
+
+
+}

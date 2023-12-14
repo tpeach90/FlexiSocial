@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { colors, fonts, universalStyles } from "../../config/config"
 import ChatMessage from "./ChatMessage"
 import LargeButton from "./LargeButton"
@@ -11,15 +11,18 @@ interface EventChatProps {
 
 export default function EventChatShort(props: EventChatProps) {
 
+    function seeFullConversation() {
+        console.log("See full conversation")
+    }
 
     return (
         <View style={styles.container}>
             <View style={{flexDirection:"row", alignItems:"center"}}>
                 <Text style={styles.heading}>Talk to others about this event</Text>
-                <View style={styles.messageCounter}>
+                <TouchableOpacity style={styles.messageCounter} onPress={seeFullConversation}>
                     <FontAwesomeIcon icon={faMessage} style={styles.messageIcon} size={14}/>
                     <Text style={styles.messageCounterCount} >15</Text>
-                </View>
+                </TouchableOpacity>
             </View>
             <Text style={styles.subheading}>Most recent messages</Text>
 
@@ -42,7 +45,7 @@ export default function EventChatShort(props: EventChatProps) {
             />
 
             {/* perhaps need to consider doing something different when there are few enough messages to fit on the screen without going into the separate chat view. TODO. */}
-            <LargeButton text="See full conversation" onPress={() => console.log("See full conversation")} style={{alignSelf:"center", marginTop:10}}/>
+            <LargeButton text="See full conversation" onPress={seeFullConversation} style={{alignSelf:"center", marginTop:10}}/>
 
         </View>
     )
