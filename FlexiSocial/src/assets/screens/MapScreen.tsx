@@ -49,9 +49,9 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
             >   
                 <MapScreenTagBar/>
 
-                {/* <View style={StyleSheet.absoluteFillObject}>
-                    <EventFullInfoPanel />
-                </View> */}
+                <View style={StyleSheet.absoluteFillObject}>
+                    <EventFullInfoPanel eventId={1}/>
+                </View>
 
             </SafeAreaView>
         </View>

@@ -52,7 +52,7 @@ export async function getEvent(id: bigint) : Promise<EventObj | null> {
     }
 
     if (result.rows.length != 1) {
-        throw new GraphQLError("Event not found")
+        return null
     }
 
     const event = result.rows[0];
@@ -69,6 +69,53 @@ export async function getEvent(id: bigint) : Promise<EventObj | null> {
         duration: event[7],
         capacity: event[8]
     };
+}
+
+
+export async function getEvents(ids: readonly number[]) {
+    const query = `
+        SELECT
+            Id, 
+            Name, 
+            Description, 
+            CreatorId,
+            Location, 
+            ST_X(Point), 
+            ST_Y(Point), 
+            Time, 
+            extract(epoch from duration),
+            Capacity
+        FROM Events
+        WHERE id=ANY($1)
+    `
+
+    const result = await connection.query(query, { params: [ids] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    // need to return in the same order as the input.
+
+    // map from id to object.
+    const userMap = new Map(result.rows.map((row) => 
+        [row[0], {
+            id: row[0],
+            name: row[1],
+            description: row[2],
+            creatorId: row[3],
+            location: row[4],
+            lat: row[5],
+            lon: row[6],
+            time: row[7],
+            duration: row[8],
+            capacity: row[9]
+        }]
+    ));
+
+    return ids.map((id) => userMap.get(id) ?? null)
+
 }
 
 /**
@@ -259,7 +306,7 @@ export async function getChatMessage(id: number) {
     }
 
     if (result.rows.length != 1) {
-        throw new Error("No chat message with id " + id);
+        return null
     }
 
     return {
@@ -274,14 +321,53 @@ export async function getChatMessage(id: number) {
 
 }
 
+export async function getChatMessages(ids: readonly number[]) {
+    const query = `
+        SELECT
+            Id,
+            EventId,
+            AuthorId,
+            Time,
+            Content,
+            ReplyingToId
+        FROM ChatMessages
+        LEFT JOIN ChatReplies
+        	ON Id = MessageId
+        WHERE Id=ANY($1)
+    `
 
-export async function getUser(id: number, context: GraphQLContext): Promise<User | null> {
+    const result = await connection.query(query, { params: [ids] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+    
+    const messageMap = new Map(result.rows.map((row) =>
+        [row[0], {
+            id: row[0],
+            eventId: row[1],
+            authorId: row[2],
+            time: row[3],
+            content: row[4],
+            replyingToId: row[5],
+        }]
+    ));
+
+
+    return ids.map((id) => messageMap.get(id) ?? null)
+ 
+}
+
+
+export async function getUser(id: number, context: GraphQLContext) {
 
 
     const query = `
         SELECT 
             DisplayName,
-            Role
+            Role,
+            Bio
         FROM Users
         WHERE id=$1
     `
@@ -294,7 +380,7 @@ export async function getUser(id: number, context: GraphQLContext): Promise<User
     }
 
     if (result.rows.length != 1) {
-        throw new GraphQLError("User not found")
+        return null
     }
 
     const user = result.rows[0];
@@ -302,9 +388,44 @@ export async function getUser(id: number, context: GraphQLContext): Promise<User
     return {
         id: id,
         displayName: user[0],
-        role: user[1]
+        role: user[1],
+        bio: user[2]
     };
 }
+
+export async function getUsers(ids: readonly number[]) {
+    const query = `
+        SELECT
+            Id
+            DisplayName,
+            Role,
+            Bio
+        FROM Users
+        WHERE id=ANY($1)
+    `
+    const result = await connection.query(query, { params: [ids] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    const userMap = new Map(result.rows.map((row) =>
+        [row[0], {
+            id: row[0],
+            displayName: row[1],
+            role: row[2],
+            bio: row[3]
+        }]
+    ));
+
+
+    return ids.map((id) => userMap.get(id) ?? null)
+
+}
+
+
+
 /**
  * Get the number of people that are going to, interested in, and organizers of an event. Will return 0 for all fields if the queried event does not exist.
  * @param id Event id
@@ -347,3 +468,42 @@ export async function getEventStats(id: number) {
 
 
 }
+
+
+export async function getEventIdsOrganizedByUser(userId: number) {
+    
+    const query = `
+        SELECT eventId
+        FROM UserEventRoles
+        WHERE userid=$1
+        AND role='organizer'
+    `
+    const result = await connection.query(query, { params: [userId] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+    
+    return result.rows.map((row) => row[0]);
+}
+
+export async function getNumEventsOrganizedByUser(userId: number) : Promise<number> {
+
+    const query = `
+        SELECT count(*)
+        FROM UserEventRoles
+        WHERE userid=$1
+        AND role='organizer'
+    `
+
+    const result = await connection.query(query, { params: [userId] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    return result.rows[0][0]
+}
+

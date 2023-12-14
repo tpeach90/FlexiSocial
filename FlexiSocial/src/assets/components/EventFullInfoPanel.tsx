@@ -10,6 +10,7 @@ import EventInfo from "./EventInfo";
 import EventChatShort from "./EventChatShort";
 import { useLazyQuery, useQuery } from "@apollo/client";
 import { GET_CHAT, GET_EVENT, GET_EVENT_AND_CHAT } from "../../graphql/queries";
+import { Shadow } from "react-native-shadow-2";
 
 
 interface EventFullInfoPanelProps {
@@ -44,12 +45,8 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
     return (
         <ScrollView 
             style={styles.scrollView}
-            contentContainerStyle={styles.panelContainer}
+            contentContainerStyle={[styles.panelContainer, styles.background]}
         >
-
-
-            <View style={styles.background} />
-
 
             {/* TODO move the header into a separate component here.
             */}
@@ -108,8 +105,19 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
 const styles = StyleSheet.create({
     background: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: colors.white,
-        opacity:0.75
+        backgroundColor: "rgba(255, 255, 255, 0.85)",
+        // shadowColor: "#000",
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 5,
+        // },
+        // shadowOpacity: 0.34,
+        // shadowRadius: 6.27,
+
+        // elevation: 10,
+
+        // backgroundColor: colors.white,
+        // opacity:0.75
 
     },
     scrollView: {

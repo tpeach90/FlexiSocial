@@ -32,6 +32,13 @@ type User {
     id: Int!
     displayName: String!
     role: String!
+    bio: String
+    eventsOrganized: [Event!]
+    stats: UserStats!
+}
+
+type UserStats {
+    eventsOrganizedCount: Int!
 }
 
 type Event {

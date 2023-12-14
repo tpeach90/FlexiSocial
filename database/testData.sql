@@ -16,16 +16,16 @@ DO $$
     BEGIN
 
         -- create some users.
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword)
-        VALUES ('John Doe', 'standard', 'john.doe@hotmail.com', 'pretendthisisahashedpassword')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
+        VALUES ('John Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m John, I like to go to more casual events.\nInstagram: @john.doe\nTwitter: @thejohndoe31')
         RETURNING Id INTO johnsId;
 
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword)
-        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
+        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We won''t get along unless you''ve seen Star Wars. If not, looking at the plot summary on Wikipedia is good enough.\nSnapchat: joedoesnotbloggs8')
         RETURNING Id INTO joesId;
 
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword)
-        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
+        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯')
         RETURNING Id INTO phoebesID;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword)

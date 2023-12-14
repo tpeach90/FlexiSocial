@@ -37,5 +37,5 @@ export const initialPersistentState: StatePersistentSlice = {
     }
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "debug",
+    screenStack: "app",
 }

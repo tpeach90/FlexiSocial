@@ -24,6 +24,7 @@ CREATE TABLE Users (
     Id integer primary key generated always as identity,
     DisplayName varchar(255) NOT NULL,
     Role USER_ROLE NOT NULL,
+    Bio varchar(8000),
     Email varchar(255) NOT NULL,
     HashedPassword varchar(255) NOT NULL
 );

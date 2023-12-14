@@ -6,18 +6,13 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { getChatMessage, getChatMessageCount, getEvent, getEventStats, getUser, queryChatMessages } from './queries';
+import { getChatMessage, getChatMessageCount, getEvent, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getUser, queryChatMessages } from './queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 
 // [] means list
 //  ! means non-nullable
 
 const typeDefs = readFileSync("typeDefs.graphql", 'utf8')
-
-// the "database"
-var users = [] as User[];
-export function getUsers() {return users};
-
 
 export const schema = createSchema<GraphQLContext>({
     typeDefs: [TimestampTypeDefinition, typeDefs].join("\n"),
@@ -35,20 +30,30 @@ export const schema = createSchema<GraphQLContext>({
         Query: {
             hello: () => 'world',
             // user: (_, {id}, context) => users.find(user => user.id == id),
-            user: (_, {id}, context) => getUser(id, context),
-            me: (_, args, context: GraphQLContext) => context.currentUser,
+            user: (_, { id }, { userLoader }) => userLoader.load(id),
+            // me: (_, args, context: GraphQLContext) => context.currentUser,
 
-            event: (_, {id}, context) => getEvent(id)
+            event: (_, { id }, { eventLoader }) => eventLoader.load(id),
+
+        },
+
+        User: {
+            // __resolveReference: ({id}, {}, context) => getUser(id, context),
+
+            eventsOrganized: async ({id}, {}, {eventLoader}) => 
+                (await getEventIdsOrganizedByUser(id))
+                    .map((eventId) => eventLoader.load(eventId))
+            ,
+
+            stats: ({id}, {}, context) => ({id})
+        },
+
+        UserStats: {
+            eventsOrganizedCount: ({id}, {}, context) => getNumEventsOrganizedByUser(id) 
         },
 
         Event: {
-            // this needs to return a user object.
-            creator: (parent, _, context: GraphQLContext) => {
-                // the id of the creator is parent.creatorId
-                // todo if only the id is requested from the user then we don't need to make a second query to the database.
-                return getUser(parent.creatorId, context);
-
-            },
+            creator: ({ creatorId }, _, {userLoader}) => userLoader.load(creatorId),
 
             chat: (parent, _, context: GraphQLContext) => ({
                 eventId: parent.id
@@ -61,7 +66,7 @@ export const schema = createSchema<GraphQLContext>({
          * Required parent values: eventId
          */
         Chat: {
-            event: ({eventId}, _ , context) => getEvent(eventId),
+            event: ({eventId}, _ , {eventLoader}) => eventLoader.load(eventId),
             count: ({eventId}, _, context) => getChatMessageCount(eventId),
             messageQuery: async ({eventId}, params, context) => {
                 
@@ -71,78 +76,78 @@ export const schema = createSchema<GraphQLContext>({
         },
 
         ChatQueryResult: {
-            messages: ({ messageIds }, {}, context) => 
+            messages: ({ messageIds }, {}, {chatMessageLoader}) => 
                 messageIds.map((messageId: number) => 
-                    getChatMessage(messageId)
+                    chatMessageLoader.load(messageId)
                 )
         },
 
         ChatMessage: {
-            event: ({eventId}, {}, context) => getEvent(eventId),
-            author: ({authorId}, {}, context) => getUser(authorId, context),
-            reply: ({ replyingToId }, { }, context) => 
+            event: ({ eventId }, { }, {eventLoader}) => eventLoader.load(eventId),
+            author: ({ authorId }, { }, { userLoader }) => userLoader.load(authorId),
+            reply: ({ replyingToId }, { }, { chatMessageLoader }) => 
                 replyingToId != null 
-                    ? getChatMessage(replyingToId) 
+                    ? chatMessageLoader.load(replyingToId) 
                     : null
         },
 
  
         Mutation: {
-            async signup(
-                parent: unknown,
-                args: {
-                    email: string,
-                    password: string,
-                    name: string,
-                    age: number
-                },
-                context: GraphQLContext  
-            ) {
-                // encrypt the user's password.
-                const password = await hash(args.password, 10)
+        //     async signup(
+        //         parent: unknown,
+        //         args: {
+        //             email: string,
+        //             password: string,
+        //             name: string,
+        //             age: number
+        //         },
+        //         context: GraphQLContext  
+        //     ) {
+        //         // encrypt the user's password.
+        //         const password = await hash(args.password, 10)
 
-                // store the new user in the database.
-                // const user = await context.prisma.user.create({
-                //     data: { ...args, password }
-                // })
+        //         // store the new user in the database.
+        //         // const user = await context.prisma.user.create({
+        //         //     data: { ...args, password }
+        //         // })
                 
-                // Tom: here just add them to the users data structure for now.
-                // create a new ID:
-                var id = 0;
-                while (id.toString() in users) id++;
-                // add user
-                const user = {
-                    age: args.age,
-                    name: args.name,
-                    password: password,
-                    email: args.email,
-                    id: id.toString()
-                }
-                // users.push(user);
+        //         // Tom: here just add them to the users data structure for now.
+        //         // create a new ID:
+        //         var id = 0;
+        //         while (id.toString() in users) id++;
+        //         // add user
+        //         const user = {
+        //             age: args.age,
+        //             name: args.name,
+        //             password: password,
+        //             email: args.email,
+        //             id: id.toString()
+        //         }
+        //         // users.push(user);
 
 
-                // 3
-                const token = sign({ userId: id }, APP_SECRET)
+        //         // 3
+        //         const token = sign({ userId: id }, APP_SECRET)
 
-                // 4
-                return { token, user }
-            },
+        //         // 4
+        //         return { token, user }
+        //     },
 
-            // async login(parent: unknown, args:{email: string, password: string /*unhashed password*/ }, context: GraphQLContext) {
+        //     // async login(parent: unknown, args:{email: string, password: string /*unhashed password*/ }, context: GraphQLContext) {
 
-            //     // look for the user with matching email
-            //     const user = users.find(user => user.email == args.email);
+        //     //     // look for the user with matching email
+        //     //     const user = users.find(user => user.email == args.email);
 
 
-            //     // compare hashed passwords
-            //     if (!user || ! await compare(args.password, user.password))
-            //         throw new GraphQLError("Username or password incorrect")
+        //     //     // compare hashed passwords
+        //     //     if (!user || ! await compare(args.password, user.password))
+        //     //         throw new GraphQLError("Username or password incorrect")
             
-            //     const token = sign({userID: user.id}, APP_SECRET);
+        //     //     const token = sign({userID: user.id}, APP_SECRET);
 
-            //     return {token, user};
-            // }
-        },
+        //     //     return {token, user};
+        //     // }
+        // },
 
         // User: {
         //     age: (parent, args, context) => {
@@ -153,7 +158,7 @@ export const schema = createSchema<GraphQLContext>({
         //                 return parent.age
         //         }
         //     }
-        // }
+        }
     }
 })
 
