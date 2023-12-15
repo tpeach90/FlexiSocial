@@ -3,6 +3,7 @@ import { connection } from "./connection";
 import { GraphQLContext } from "./context";
 
 import {Event as EventObj, User} from "./types"
+import { tileToBBox } from "./tiles";
 
 
 /**
@@ -63,8 +64,8 @@ export async function getEvent(id: bigint) : Promise<EventObj | null> {
         description: event[1],
         creatorId : event[2],
         location: event[3],
-        lat: event[4],
-        lon: event[5],
+        lon: event[4],
+        lat: event[5],
         time: event[6],
         duration: event[7],
         capacity: event[8]
@@ -106,8 +107,8 @@ export async function getEvents(ids: readonly number[]) {
             description: row[2],
             creatorId: row[3],
             location: row[4],
-            lat: row[5],
-            lon: row[6],
+            lon: row[5],
+            lat: row[6],
             time: row[7],
             duration: row[8],
             capacity: row[9]
@@ -505,5 +506,64 @@ export async function getNumEventsOrganizedByUser(userId: number) : Promise<numb
     }
 
     return result.rows[0][0]
+}
+
+export async function getEventIdsInTile(tile: number, dateRanges?:Date[][]) {
+
+    const {west, south, east, north} = tileToBBox(tile);
+
+    let query = `
+        SELECT id
+        FROM Events
+        WHERE ST_Within(point, ST_MakeEnvelope($1, $2, $3, $4, 4326))
+    `;
+
+    // remove the first element later. just so the indices correspond nicely to the query.
+    let params: any[] = [undefined, west, south, east, north];
+
+    if (dateRanges) {
+
+        query += `
+            AND (
+        `
+        let queryAdditions = []
+
+        var i = 5;
+        for (const [start, end] of dateRanges) {
+            params[i] = start.toISOString();
+            params[i+1] = end.toISOString();
+            queryAdditions.push(`
+                (time >= $${i++}::timestamp AND time <= $${i++}::timestamp)
+            `)
+        }
+        query += queryAdditions.join(" OR ");
+        query += `)`
+    }
+
+    params = params.slice(1);
+
+    const result = await connection.query(query, { params });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    return result.rows.map(([id]) => id)
+
+
+}
+
+export async function getEventIdsInTiles(tiles: number[], dateRanges?: Date[][]) {
+
+    if (tiles.length == 0) return [];
+
+    // make multiple queries for now
+
+    const eventIdsPromises = tiles.map(tile => getEventIdsInTile(tile, dateRanges));
+
+    const eventIds = (await Promise.all(eventIdsPromises)).flat();
+
+    return eventIds;
 }
 

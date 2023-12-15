@@ -1,20 +1,26 @@
 # this is a special type - another special type is Mutation..
 type Query {
     user(id: Int): User
-    hello: String
-    me: User
+    # hello: String
+    # me: User
 
-    events(
+    eventsInBBox(
         east: Float!, 
         west: Float!, 
         north: Float!, 
         south: Float!, 
         earliest: Timestamp!, 
-        latest: Timestamp!
-    ): [Event]
+        latest: Timestamp!,
+        excludeTiles: [Int!] # ids of tiles to ignore
+    ): EventsInBBoxQueryResult!
 
     event(id:Int): Event
 },
+
+type EventsInBBoxQueryResult {
+    tilesLoaded: [Int!]!,
+    events: [Event!]!
+}
 
 type Mutation {
     signup(email: String!, password: String!, name: String!, age: Int!): AuthPayload

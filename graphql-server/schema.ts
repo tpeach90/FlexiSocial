@@ -6,8 +6,9 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { getChatMessage, getChatMessageCount, getEvent, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getUser, queryChatMessages } from './queries';
+import { getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getUser, queryChatMessages } from './queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
+import { bboxToIntersectedTiles } from './tiles';
 
 // [] means list
 //  ! means non-nullable
@@ -28,13 +29,30 @@ export const schema = createSchema<GraphQLContext>({
         },
 
         Query: {
-            hello: () => 'world',
-            // user: (_, {id}, context) => users.find(user => user.id == id),
-            user: (_, { id }, { userLoader }) => userLoader.load(id),
-            // me: (_, args, context: GraphQLContext) => context.currentUser,
+            // hello: () => 'world',
+            // // user: (_, {id}, context) => users.find(user => user.id == id),
+            // user: (_, { id }, { userLoader }) => userLoader.load(id),
+            // // me: (_, args, context: GraphQLContext) => context.currentUser,
 
             event: (_, { id }, { eventLoader }) => eventLoader.load(id),
 
+            eventsInBBox: async (_, { east, west, north, south, earliest, latest, excludeTiles }, context) => {
+
+                const tiles = bboxToIntersectedTiles({west, east, south, north});
+                // filter out tiles in the user's provided exclude list
+                const tilesLoaded = excludeTiles ? tiles.filter(tile => !excludeTiles.contains(tile)) : tiles;
+
+                const eventIds = await getEventIdsInTiles(tilesLoaded, [[earliest, latest]]);
+
+                return {tilesLoaded, eventIds};
+            }
+
+        },
+
+        EventsInBBoxQueryResult: {
+            events: ({eventIds}, {}, {eventLoader}) => 
+                eventIds.map((id:number) => eventLoader.load(id))
+            
         },
 
         User: {

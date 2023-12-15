@@ -63,7 +63,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                 <Marker 
                     coordinate={{ latitude:52.787696579248234, longitude: -0.1533563650942924}}
                     pinColor={colors.primary}
-                    // add a custom marker here!!
+                    // TODO add a custom marker here!!
                     // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
                 />
             </MapView>

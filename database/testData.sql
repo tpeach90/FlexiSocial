@@ -38,7 +38,7 @@ DO $$
             'Pub meetup', 
             'Have a friendly meetup at a pub and do a pub quiz', 
             johnsId, 
-            ST_SetSRID(ST_MakePoint(52.78767525040571, -0.15334250560616502),4326), -- Pied Calf in Spalding
+            ST_SetSRID(ST_MakePoint(-0.15334250560616502, 52.78767525040571),4326), -- Pied Calf in Spalding
             'The Pied Calf, Spalding',
             '2023-12-16 19:00:00+00',
             '03:00:00',
