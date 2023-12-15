@@ -40,7 +40,7 @@ export const schema = createSchema<GraphQLContext>({
 
                 const tiles = bboxToIntersectedTiles({west, east, south, north});
                 // filter out tiles in the user's provided exclude list
-                const tilesLoaded = excludeTiles ? tiles.filter(tile => !excludeTiles.contains(tile)) : tiles;
+                const tilesLoaded = excludeTiles ? tiles.filter(tile => !excludeTiles.includes(tile)) : tiles;
 
                 const eventIds = await getEventIdsInTiles(tilesLoaded, [[earliest, latest]]);
 
