@@ -396,7 +396,7 @@ export async function getUser(id: number, context: GraphQLContext) {
 export async function getUsers(ids: readonly number[]) {
     const query = `
         SELECT
-            Id
+            Id,
             DisplayName,
             Role,
             Bio

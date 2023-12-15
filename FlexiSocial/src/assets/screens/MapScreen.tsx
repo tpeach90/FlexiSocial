@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { PermissionsAndroid, ScrollView, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,28 +10,55 @@ import { setMapScreenToggle } from "../../redux/actions";
 import MapScreenTagBar from "../components/MapScreenTagBar";
 import EventInfo from "../components/EventInfo";
 import EventFullInfoPanel from "../components/EventFullInfoPanel";
+import {  useEffect, useRef, useState } from "react";
+import GetLocation from "react-native-get-location";
+import Geolocation from "@react-native-community/geolocation";
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 
 export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
+    const mapRef = useRef<MapView>(null);
 
-    
+    // set initial location
+    useEffect(() => {
+        Geolocation.getCurrentPosition(
+            position => {
+                // apparently mapRef.current should never be null here
+                // because this runs after the MapView has rendered.
+                mapRef.current?.animateToRegion({
+                    ...position.coords,
+                    latitudeDelta: 0.3,
+                    longitudeDelta: 0.3,
+                }, 1000)
+            },
+            error => console.error(error),
+            { enableHighAccuracy: true, timeout: 60000 }
+        );
+    }, [])
+
 
     return (
         <View style={styles.container}>
-            {/*Render our MapView*/}
             <MapView
+                ref={mapRef}
                 style={styles.map}
-                //specify our coordinates.
-                // initialRegion={{
-                //     latitude: 37.78825,
-                //     longitude: -122.4324,
-                //     latitudeDelta: 0.0922,
-                //     longitudeDelta: 0.0421,
-                // }}
+                showsUserLocation={true}
+                showsMyLocationButton={true}
                 customMapStyle={googleMapsStyle}
+                mapPadding={{
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    top: 45 // this prevents icons being hidden by the tags.
+                    // TODO may cause issues on IOS - map padding might need to be increased to account for the notch
+                }}
+                onMapReady={() => {
+                    PermissionsAndroid.request(
+                        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                    )
+                }}
             >
                 <Marker 
                     coordinate={{ latitude:52.787696579248234, longitude: -0.1533563650942924}}
@@ -50,7 +77,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                 <MapScreenTagBar/>
 
                 <View style={StyleSheet.absoluteFillObject}>
-                    <EventFullInfoPanel eventId={1}/>
+                    {/* <EventFullInfoPanel eventId={1}/> */}
                 </View>
 
             </SafeAreaView>

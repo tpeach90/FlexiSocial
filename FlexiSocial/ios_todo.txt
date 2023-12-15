@@ -1,0 +1,2 @@
+post install for this:
+https://www.npmjs.com/package/react-native-get-location
