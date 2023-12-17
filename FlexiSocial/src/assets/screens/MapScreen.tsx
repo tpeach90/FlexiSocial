@@ -2,7 +2,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
 import { PermissionsAndroid, ScrollView, StyleSheet, Text, View } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Region } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TagButton from "../components/TagButton";
@@ -13,6 +13,7 @@ import EventFullInfoPanel from "../components/EventFullInfoPanel";
 import {  useEffect, useRef, useState } from "react";
 import GetLocation from "react-native-get-location";
 import Geolocation from "@react-native-community/geolocation";
+import { State } from "../../redux/state";
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
@@ -20,6 +21,8 @@ type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
     const mapRef = useRef<MapView>(null);
+    const [region, setRegion] = useState<Region|null>(null);
+    const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
 
     // set initial location
     useEffect(() => {
@@ -37,6 +40,15 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
             { enableHighAccuracy: true, timeout: 60000 }
         );
     }, [])
+
+
+    // load markers
+    useEffect(() => {
+        if (region) {
+            // load the events that are to be displayed.
+            
+        }
+    }, [region, toggles], )
 
 
     return (
@@ -59,6 +71,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
                     )
                 }}
+                onRegionChangeComplete={(region) => setRegion(region)}
             >
                 <Marker 
                     coordinate={{ latitude:52.787696579248234, longitude: -0.1533563650942924}}

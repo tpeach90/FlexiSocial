@@ -9,9 +9,6 @@ import { Connection } from 'postgresql-client';
 // PGPASSWORD = <password> # enter the password here
 // PGSCHEMA = public
 
-
-console.log(process.env.DATABASE_URL)
-
 // export const connection = new Connection(process.env.DATABASE_URL);
 
 export const connection = new Connection();

@@ -1,0 +1,6 @@
+
+docker network create flexisocial-net
+
+docker build -t flexisocial-graphql-server .
+
+docker run -d -p 4000:4000 --net flexisocial-net --name graphql-server flexisocial-graphql-server

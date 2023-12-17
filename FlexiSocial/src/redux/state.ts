@@ -1,20 +1,27 @@
 import { ScreenStackOptions } from "../utils/types";
 
+export type Toggle = "today" | "tomorrow" | "thisWeek" | "thisMonth"
+
 // typing of the state.
 export type StatePersistentSlice = {
     userToken: string | null,
 
     mapScreen: {
-        toggles: {
-            today: boolean,
-            tomorrow: boolean,
-            thisWeek: boolean,
-            thisMonth: boolean,
-        }
+        toggles: Record<Toggle,boolean>
     }
 }
 export type StateNonPersistentSlice = {
-    screenStack: ScreenStackOptions | null
+    screenStack: ScreenStackOptions | null,
+    mapScreen: {
+        eventData: Record<Toggle, {
+            markers: {
+                eventId: number,
+                name: string
+            }[],
+            tilesLoaded: number[]
+        }>,
+        
+    }
 }
 
 export type State = {
@@ -38,4 +45,24 @@ export const initialPersistentState: StatePersistentSlice = {
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
     screenStack: "app",
+    mapScreen: {
+        eventData: {
+            today: {
+                markers:[],
+                tilesLoaded:[]
+            },
+            tomorrow: {
+                markers: [],
+                tilesLoaded: []
+            },
+            thisWeek: {
+                markers: [],
+                tilesLoaded: []
+            },
+            thisMonth: {
+                markers: [],
+                tilesLoaded: []
+            }
+        }
+    }
 }

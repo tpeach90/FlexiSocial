@@ -97,3 +97,8 @@ export const GET_EVENT_AND_CHAT = gql`
     }
 
 `
+
+// export const GET_EVENTS_ON_SCREEN = gql`
+//     query GetEventsOnScreen()
+
+// `
