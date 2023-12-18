@@ -50,7 +50,7 @@ You should now be able to start and stop the "database" container within Docker 
 
 ### GraphQL server
 
-Below is the instructions to run on bare metal. There is also a Dockerfile for the Graphql server, but this is not recommended.
+Below is the instructions to run directly on your machine. There is also a Dockerfile for the Graphql server, but this is not recommended.
 
 Install [Node](https://nodejs.org/en) if not already. The LTS version is probably fine, but in case you have issues, the version used to develop this app is `v18.17.1`.
 
