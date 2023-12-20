@@ -9,8 +9,8 @@ type Query {
         west: Float!, 
         north: Float!, 
         south: Float!, 
-        earliest: Timestamp!, 
-        latest: Timestamp!,
+        earliest: Timestamp, 
+        latest: Timestamp,
         excludeTiles: [Int!] # ids of tiles to ignore
     ): EventsInBBoxQueryResult!
 

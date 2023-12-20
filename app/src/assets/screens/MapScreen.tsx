@@ -6,7 +6,7 @@ import MapView, { Marker, Region } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TagButton from "../components/TagButton";
-import { setMapScreenToggle } from "../../redux/actions";
+import { addMarkers, setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
 import MapScreenTagBar from "../components/MapScreenTagBar";
 import EventInfo from "../components/EventInfo";
 import EventFullInfoPanel from "../components/EventFullInfoPanel";
@@ -14,6 +14,8 @@ import {  useEffect, useRef, useState } from "react";
 import GetLocation from "react-native-get-location";
 import Geolocation from "@react-native-community/geolocation";
 import { State } from "../../redux/state";
+import { useLazyQuery } from "@apollo/client";
+import { GET_EVENTS_ON_SCREEN } from "../../graphql/queries";
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
@@ -21,8 +23,14 @@ type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
     const mapRef = useRef<MapView>(null);
-    const [region, setRegion] = useState<Region|null>(null);
-    const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
+    // const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
+    const { markers, tilesLoaded } = useSelector((state: State) => state.nonPersistent.mapScreen);
+    const eventInfoPanelStatus = useSelector((state: State) => state.nonPersistent.mapScreen.eventInfo)
+
+    // query to load markers
+    const [getMarkers, { loading: markersLoading, error: markersError, data: markersData }] = useLazyQuery(GET_EVENTS_ON_SCREEN)
+
+    const dispatch = useDispatch();
 
     // set initial location
     useEffect(() => {
@@ -32,8 +40,8 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                 // because this runs after the MapView has rendered.
                 mapRef.current?.animateToRegion({
                     ...position.coords,
-                    latitudeDelta: 0.3,
-                    longitudeDelta: 0.3,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
                 }, 1000)
             },
             error => console.error(error),
@@ -42,13 +50,52 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
     }, [])
 
 
-    // load markers
+    // add markers to the list when the queries complete.
     useEffect(() => {
-        if (region) {
-            // load the events that are to be displayed.
-            
+        if (markersError) {
+            console.error(markersError)
         }
-    }, [region, toggles], )
+        if (!markersLoading && markersData) {
+            console.log("received data: " + JSON.stringify(markersData))
+            if (markersData.eventsInBBox.tilesLoaded.length != 0) {
+                dispatch(addMarkers(markersData.eventsInBBox.events, markersData.eventsInBBox.tilesLoaded))
+            }
+        }
+    }, [markersLoading, markersData, markersError])
+
+
+    // fetch new data when the user moves the screen.
+    // NOTE this is an awful way of doing this I think, because if the screen moves while a query is in progress then the previous one will be cancelled wasting server resources. Maybe fix this if there is a better way
+    async function getNewData(region: Region) {
+        
+
+        getMarkers({
+            variables: {
+                west: region.longitude - region.longitudeDelta/2,
+                south: region.latitude - region.latitudeDelta/2,
+                east: region.longitude + region.longitudeDelta / 2,
+                north: region.latitude + region.latitudeDelta / 2,
+                excludeTiles: tilesLoaded,
+                earliest: new Date(Date.now()).toISOString()
+            }
+        })
+    }
+
+    
+
+    // create queries for new data
+    // useEffect(() => {
+    //     if (!markersLoading && requestNewData && region) {
+    //         getMarkers({variables: {
+    //             west: region.longitude,
+    //             south: region.latitude,
+    //             east: region.longitude+region.longitudeDelta,
+    //             north: region.latitude + region.latitudeDelta,
+    //             excludeTiles:     
+    //         }})
+    //         setRequestNewData(false);
+    //     }
+    // }, [markersLoading, region, requestNewData])
 
 
     return (
@@ -71,14 +118,19 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
                     )
                 }}
-                onRegionChangeComplete={(region) => setRegion(region)}
+                onRegionChangeComplete={getNewData}
             >
-                <Marker 
-                    coordinate={{ latitude:52.787696579248234, longitude: -0.1533563650942924}}
-                    pinColor={colors.primary}
-                    // TODO add a custom marker here!!
-                    // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
-                />
+                {markers.map((marker, i) => 
+                    <Marker
+                        coordinate={{latitude: marker.lat, longitude: marker.lon}}
+                        pinColor={colors.primary}
+                        key={i}
+                        onPress={() => dispatch(setEventInfoPanelStatus({active: true, eventId:marker.id}))}
+                        // TODO add a custom marker here!!
+                        // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
+                    />
+                )}
+
             </MapView>
 
 
@@ -90,7 +142,10 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                 <MapScreenTagBar/>
 
                 <View style={StyleSheet.absoluteFillObject}>
-                    {/* <EventFullInfoPanel eventId={1}/> */}
+                    {eventInfoPanelStatus.active 
+                        ? <EventFullInfoPanel eventId={eventInfoPanelStatus.eventId} />
+                        : undefined
+                    }
                 </View>
 
             </SafeAreaView>

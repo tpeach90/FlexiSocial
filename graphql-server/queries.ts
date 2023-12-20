@@ -508,7 +508,7 @@ export async function getNumEventsOrganizedByUser(userId: number) : Promise<numb
     return result.rows[0][0]
 }
 
-export async function getEventIdsInTile(tile: number, dateRanges?:Date[][]) {
+export async function getEventIdsInTile(tile: number, range?: { earliest?: Date, latest?: Date }) {
 
     const {west, south, east, north} = tileToBBox(tile);
 
@@ -521,24 +521,40 @@ export async function getEventIdsInTile(tile: number, dateRanges?:Date[][]) {
     // remove the first element later. just so the indices correspond nicely to the query.
     let params: any[] = [undefined, west, south, east, north];
 
-    if (dateRanges) {
-
+    var i = 5;
+    if (range?.earliest) {
+        params[i] = range.earliest.toISOString();
         query += `
-            AND (
+            AND time >= $${i++}::timestamp
         `
-        let queryAdditions = []
-
-        var i = 5;
-        for (const [start, end] of dateRanges) {
-            params[i] = start.toISOString();
-            params[i+1] = end.toISOString();
-            queryAdditions.push(`
-                (time >= $${i++}::timestamp AND time <= $${i++}::timestamp)
-            `)
-        }
-        query += queryAdditions.join(" OR ");
-        query += `)`
     }
+    if (range?.latest) {
+        params[i] = range.latest.toISOString();
+        query += `
+            AND time <= $${i++}::timestamp
+        `
+    }
+
+    // if (dateRanges) {
+
+    //     query += `
+    //         AND (
+    //     `
+    //     let queryAdditions = []
+
+    //     var i = 5;
+    //     for (const [start, end] of dateRanges) {
+    //         params[i] = start.toISOString();
+    //         params[i+1] = end.toISOString();
+    //         queryAdditions.push(`
+    //             (time >= $${i++}::timestamp AND time <= $${i++}::timestamp)
+    //         `)
+    //     }
+    //     query += queryAdditions.join(" OR ");
+    //     query += `)`
+    // }
+
+
 
     params = params.slice(1);
 
@@ -554,14 +570,15 @@ export async function getEventIdsInTile(tile: number, dateRanges?:Date[][]) {
 
 }
 
-export async function getEventIdsInTiles(tiles: number[], dateRanges?: Date[][]) {
+export async function getEventIdsInTiles(tiles: number[], range?: {earliest?: Date, latest?: Date}) {
 
     if (tiles.length == 0) return [];
 
     // make multiple queries for now
 
-    const eventIdsPromises = tiles.map(tile => getEventIdsInTile(tile, dateRanges));
+    const eventIdsPromises = tiles.map(tile => getEventIdsInTile(tile, range));
 
+    // wait for all queries to complete, and combine results
     const eventIds = (await Promise.all(eventIdsPromises)).flat();
 
     return eventIds;

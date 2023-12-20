@@ -3,7 +3,7 @@
 
 import { combineReducers } from "@reduxjs/toolkit"
 import { ScreenStackOptions } from "../utils/types"
-import { StateNonPersistentSlice, StatePersistentSlice, initialNonPersistentState, initialPersistentState } from "./state"
+import { State, StateNonPersistentSlice, StatePersistentSlice, initialNonPersistentState, initialPersistentState } from "./state"
 
 
 // all actions that the reducer implements.
@@ -22,6 +22,17 @@ export type Action = {
 {
     type: "setMapScreenToggle",
     payload: Partial<StatePersistentSlice["mapScreen"]["toggles"]>
+} | 
+{
+    type: "addMarkers",
+    payload: {
+        newTilesLoaded: number[],
+        markers: StateNonPersistentSlice["mapScreen"]["markers"]
+    }
+} |
+{
+    type: "setEventInfoPanelStatus",
+    payload: StateNonPersistentSlice["mapScreen"]["eventInfo"]
 }
 
 
@@ -42,6 +53,30 @@ function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersist
                 screenStack: action.payload.value
             }
 
+        case "addMarkers":
+            return {
+                ...state,
+                mapScreen: {
+                    ...state.mapScreen,
+                    markers: [
+                        ...state.mapScreen.markers,
+                        ...action.payload.markers
+                    ],
+                    tilesLoaded: [
+                        ...state.mapScreen.tilesLoaded,
+                        ...action.payload.newTilesLoaded
+                    ]
+                }
+            }
+
+        case "setEventInfoPanelStatus":
+            return {
+                ...state,
+                mapScreen: {
+                    ...state.mapScreen,
+                    eventInfo: action.payload
+                }
+            }
         
         default: return state;
     }

@@ -1,5 +1,6 @@
 import { ScreenStackOptions } from "../utils/types";
-import { Action, StatePersistentSlice } from "./reducer";
+import { Action,  } from "./reducer";
+import { StateNonPersistentSlice, StatePersistentSlice } from "./state";
 
 
 
@@ -36,5 +37,22 @@ export function setMapScreenToggle(values: Partial<StatePersistentSlice["mapScre
     return {
         type: "setMapScreenToggle",
         payload: values
+    }
+}
+
+export function addMarkers(markers: StateNonPersistentSlice["mapScreen"]["markers"], newTilesLoaded: number[]) : Action{
+    return {
+        type: "addMarkers",
+        payload: {
+            markers,
+            newTilesLoaded
+        }
+    }
+}
+
+export function setEventInfoPanelStatus(status: StateNonPersistentSlice["mapScreen"]["eventInfo"]) : Action{
+    return {
+        type: "setEventInfoPanelStatus",
+        payload: status
     }
 }

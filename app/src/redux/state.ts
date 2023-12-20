@@ -13,13 +13,22 @@ export type StatePersistentSlice = {
 export type StateNonPersistentSlice = {
     screenStack: ScreenStackOptions | null,
     mapScreen: {
-        eventData: Record<Toggle, {
-            markers: {
-                eventId: number,
-                name: string
-            }[],
-            tilesLoaded: number[]
-        }>,
+
+        markers: {
+            id: number,
+            name: string,
+            lat: number,
+            lon: number
+        }[],
+        tilesLoaded: number[],
+        eventInfo: {
+            active: true,
+            eventId: number
+        } |
+        {
+            active: false,
+            eventId?: number
+        }
         
     }
 }
@@ -46,23 +55,10 @@ export const initialPersistentState: StatePersistentSlice = {
 export const initialNonPersistentState: StateNonPersistentSlice = {
     screenStack: "app",
     mapScreen: {
-        eventData: {
-            today: {
-                markers:[],
-                tilesLoaded:[]
-            },
-            tomorrow: {
-                markers: [],
-                tilesLoaded: []
-            },
-            thisWeek: {
-                markers: [],
-                tilesLoaded: []
-            },
-            thisMonth: {
-                markers: [],
-                tilesLoaded: []
-            }
+        markers:[],
+        tilesLoaded:[],
+        eventInfo: {
+            active: false,
         }
     }
 }

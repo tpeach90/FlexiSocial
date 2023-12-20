@@ -1,7 +1,7 @@
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native"
 import TagButton from "./TagButton"
 import { useDispatch, useSelector } from "react-redux";
-import { setMapScreenToggle } from "../../redux/actions";
+import { setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
 import { colors, universalStyles } from "../../config/config";
 import { State } from "../../redux/state";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
@@ -40,6 +40,8 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
         }
     })
 
+    const dispatch = useDispatch();
+
     if (eventError) console.error(eventError);
 
     return (
@@ -69,7 +71,7 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
                                 organizerDisplayName: eventData.event.creator.displayName
                             }}
                             onEventOrganizerPressed={() => console.log("Event organizer pressed")}
-                            onCloseEvent={() => console.log("Close event")}
+                            onCloseEvent={() => dispatch(setEventInfoPanelStatus({active: false}))}
                             onImGoingPressed={() => console.log("I'm going")}
                             onImInterestedPressed={() => console.log("I'm interested")}
                         />

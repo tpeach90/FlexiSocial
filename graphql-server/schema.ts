@@ -42,7 +42,7 @@ export const schema = createSchema<GraphQLContext>({
                 // filter out tiles in the user's provided exclude list
                 const tilesLoaded = excludeTiles ? tiles.filter(tile => !excludeTiles.includes(tile)) : tiles;
 
-                const eventIds = await getEventIdsInTiles(tilesLoaded, [[earliest, latest]]);
+                const eventIds = await getEventIdsInTiles(tilesLoaded, {earliest, latest});
 
                 return {tilesLoaded, eventIds};
             }

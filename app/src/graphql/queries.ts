@@ -98,7 +98,17 @@ export const GET_EVENT_AND_CHAT = gql`
 
 `
 
-// export const GET_EVENTS_ON_SCREEN = gql`
-//     query GetEventsOnScreen()
+export const GET_EVENTS_ON_SCREEN = gql`
+    query GetEventsOnScreen($east:Float!, $west:Float!, $north:Float!, $south:Float!, $earliest:Timestamp!, $excludeTiles:[Int!]) {
+        eventsInBBox(east: $east, west: $west, north: $north, south: $south, earliest: $earliest, excludeTiles: $excludeTiles) {
+            tilesLoaded
+            events {
+                id
+                name
+                lat
+                lon
+            }
+        }
+    }
 
-// `
+`

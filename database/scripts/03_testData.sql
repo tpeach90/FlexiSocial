@@ -40,7 +40,7 @@ DO $$
             johnsId, 
             ST_SetSRID(ST_MakePoint(-0.15334250560616502, 52.78767525040571),4326), -- Pied Calf in Spalding
             'The Pied Calf, Spalding',
-            '2023-12-16 19:00:00+00',
+            '2024-1-16 19:00:00+00',
             '03:00:00',
             10
         ) RETURNING Id INTO pubMeetupID;
