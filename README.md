@@ -31,7 +31,7 @@ cd database
 
 Build the image:
 ```bash
-docker build -tq flexisocial-database .
+docker build -t flexisocial-database .
 ```
 
 Create and run the container. 
@@ -107,6 +107,11 @@ npm start
 Then in another terminal window:
 ```bash
 npm run android
+```
+
+For the emulator to have access to the graphql server, you need to expose the port 4000:
+```bash
+adb reverse tcp:4000 tcp:4000
 ```
 
 
