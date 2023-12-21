@@ -5,6 +5,11 @@ read -p "Start? (y/n): " start
 
 if [[ $start == "y" ]]; then
 
+    # check that docker is running
+    if ! docker info > /dev/null; then 
+        exit 1
+    fi
+
     # delete containers if they exist
     if  docker ps -a --format "table {{.Names}}" | tail -n 2 | grep "database-flexisocial" > /dev/null ; then
         echo "Deleting database-flexisocial container"
