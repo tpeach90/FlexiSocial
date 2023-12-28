@@ -8,30 +8,30 @@ if %ok%==y (
     @REM check that docker is running
     docker ps >NUL || exit 1
 
-	@REM delete containers if they exist
+    @REM delete containers if they exist
     docker ps -a --format "table {{.Names}}" | findstr "database-flexisocial" >NUL && (
 echo Deleting database-flexisocial container &^
 docker stop database-flexisocial >NUL &^
 docker rm database-flexisocial >NUL
-	)
+    )
 
-	docker ps -a --format "table {{.Names}}" | findstr "graphql-server-flexisocial" >NUL && (
+    docker ps -a --format "table {{.Names}}" | findstr "graphql-server-flexisocial" >NUL && (
 echo Deleting graphql-server-flexisocial container &^
 docker stop graphql-server-flexisocial >NUL &^
 docker rm graphql-server-flexisocial >NUL
-	)
+    )
 
 
     @REM delete images if they exist
     docker images --format "table {{.Repository}}" | findstr "database-flexisocial-image" >NUL && (
 echo Deleting database-flexisocial-image image &^
 docker image rm database-flexisocial-image >NUL
-	)
+    )
 
     docker images --format "table {{.Repository}}" | findstr "graphql-server-flexisocial-image" >NUL && (
 echo Deleting graphql-server-flexisocial-image image &^
 docker image rm graphql-server-flexisocial-image >NUL
-	)
+    )
 
     REM create images
     echo Creating database-flexisocial-image image
@@ -44,7 +44,7 @@ docker image rm graphql-server-flexisocial-image >NUL
     docker network inspect flexisocial-net >NUL 2>&1 || (
 echo Creating flexisocial-net network &^
 docker network create flexisocial-net >NUL
-	)
+    )
 
     @REM create containers
     echo Creating database-flexisocial container

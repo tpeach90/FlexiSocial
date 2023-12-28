@@ -20,9 +20,26 @@ Clone this repository onto your machine (or download and unpack the zip file).
 git clone https://github.com/tpeach90/FlexiSocial.git
 ```
 
+The rest of this section is instructions on how to set up the 3 parts of the stack.
+
+> ℹ️ **_NOTE:_**  
+> If you're not going to develop the backend and just want to run it, then the database and GraphQL server can both be run with [Docker](https://www.docker.com/products/docker-desktop/). A shell script and batch file are provided for the setup, and the following **Database** and **GraphQL server** sections can be skipped.
+>
+> Navigate to the root of this repository using `cd`. Then, with Docker running,
+>
+> ```bash
+> ./docker-setup-linux-macos.sh 
+> ```
+> 
+> or
+>
+> ```bat
+> docker-setup-windows.bat
+> ```
+
 ### Database
 
-Recommended way to use the database is with [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+Recommended way to use the database is with [Docker](https://www.docker.com/products/docker-desktop/).
 
 Change directory to *./database/*:
 ```bash
@@ -31,7 +48,7 @@ cd database
 
 Build the image:
 ```bash
-docker build -t flexisocial-database .
+docker build -t database-flexisocial-image ./database/
 ```
 
 Create and run the container. 
@@ -44,9 +61,15 @@ Create and run the container.
 > You will then need to add `--net flexisocial-net` to all `docker run` commands.
 
 ```bash
-docker run -d -p 5432:5432 --name database flexisocial-database
+docker run -d -p 5432:5432 --name database-flexisocial database-flexisocial-image
 ```
 You should now be able to start and stop the "database" container within Docker Desktop.
+
+If needed, a `psql` terminal can be opened on the database:
+
+```bash
+docker exec -it database-flexisocial psql -U flexisocial-user flexisocial
+```
 
 ### GraphQL server
 
