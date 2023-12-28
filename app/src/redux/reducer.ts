@@ -33,6 +33,12 @@ export type Action = {
 {
     type: "setEventInfoPanelStatus",
     payload: StateNonPersistentSlice["mapScreen"]["eventInfo"]
+} |
+{
+    type: "setUserScreenId",
+    payload: {
+        id?: number
+    }
 }
 
 

@@ -2,8 +2,9 @@ import { GraphQLError } from "graphql";
 import { connection } from "./connection";
 import { GraphQLContext } from "./context";
 
-import {Event as EventObj, User} from "./types"
+import {Event as EventObj, User, UserEventRole} from "./types"
 import { tileToBBox } from "./tiles";
+import _, { zip } from "underscore";
 
 
 /**
@@ -28,7 +29,7 @@ export async function eventsInBoundingBox(
     return [];
 }
 
-export async function getEvent(id: bigint) : Promise<EventObj | null> {
+export async function getEvent(id: bigint) {
 
     const query = `
         SELECT 
@@ -40,7 +41,8 @@ export async function getEvent(id: bigint) : Promise<EventObj | null> {
             ST_Y(Point), 
             Time, 
             extract(epoch from duration),
-            Capacity
+            Capacity,
+            CreatedTimestamp
         FROM Events
         WHERE id=$1
     `
@@ -68,7 +70,8 @@ export async function getEvent(id: bigint) : Promise<EventObj | null> {
         lat: event[5],
         time: event[6],
         duration: event[7],
-        capacity: event[8]
+        capacity: event[8],
+        createdTimestamp: event[9]
     };
 }
 
@@ -85,7 +88,8 @@ export async function getEvents(ids: readonly number[]) {
             ST_Y(Point), 
             Time, 
             extract(epoch from duration),
-            Capacity
+            Capacity,
+            CreatedTimestamp
         FROM Events
         WHERE id=ANY($1)
     `
@@ -111,7 +115,8 @@ export async function getEvents(ids: readonly number[]) {
             lat: row[6],
             time: row[7],
             duration: row[8],
-            capacity: row[9]
+            capacity: row[9],
+            createdTimestamp: row[10]
         }]
     ));
 
@@ -368,7 +373,8 @@ export async function getUser(id: number, context: GraphQLContext) {
         SELECT 
             DisplayName,
             Role,
-            Bio
+            Bio,
+            RegisterTimestamp
         FROM Users
         WHERE id=$1
     `
@@ -389,8 +395,9 @@ export async function getUser(id: number, context: GraphQLContext) {
     return {
         id: id,
         displayName: user[0],
-        role: user[1],
-        bio: user[2]
+        role: user[1].toString(),
+        bio: user[2],
+        registerTimestamp: user[3]
     };
 }
 
@@ -400,7 +407,8 @@ export async function getUsers(ids: readonly number[]) {
             Id,
             DisplayName,
             Role,
-            Bio
+            Bio,
+            RegisterTimestamp
         FROM Users
         WHERE id=ANY($1)
     `
@@ -415,8 +423,9 @@ export async function getUsers(ids: readonly number[]) {
         [row[0], {
             id: row[0],
             displayName: row[1],
-            role: row[2],
-            bio: row[3]
+            role: row[2].toString(),
+            bio: row[3],
+            registerTimestamp: row[4]
         }]
     ));
 
@@ -582,5 +591,58 @@ export async function getEventIdsInTiles(tiles: number[], range?: {earliest?: Da
     const eventIds = (await Promise.all(eventIdsPromises)).flat();
 
     return eventIds;
+}
+/**
+ * 
+ * @param userIds 
+ * @param eventId 
+ * @returns map of userId to role. Users with "none" role will not appear in the result.
+ */
+export async function getUserRolesInEvent(userIds: number[], eventId: number) {
+
+    console.log(userIds, eventId);
+
+    const query = `
+        SELECT UserId, Role
+        FROM UserEventRoles
+        WHERE EventId=$1
+        AND UserId=ANY($2)
+    `
+
+    const result = await connection.query(query, { params: [eventId, userIds] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    return new Map<number, UserEventRole>(result.rows.map(([userId, roleBuf]) => [userId, roleBuf.toString()]));
+}
+
+export async function getUserEventRoles(userEvents: readonly {userId: number, eventId: number}[]) {
+    
+    // group by event id - make a map
+    let eventToUsers = new Map<number, number[]>();
+    for (const {userId, eventId} of userEvents) {
+        eventToUsers.get(eventId)?.push(userId) ?? eventToUsers.set(eventId, [userId])
+    }
+
+    // turn this into an array incase we get it back in a different order somehow.
+    const eventToUsersArray = Array.from(eventToUsers.entries())
+
+    // make queries to the database
+    const results = await Promise.all(eventToUsersArray.map(([eventId, userIds]) => 
+        getUserRolesInEvent(userIds, eventId)
+    ));
+
+    // combine results to make nested map
+    const eventToUserToRole = new Map<number, Map<number, (UserEventRole|null)>>();
+    for (const [[eventId, _], map] of zip(eventToUsersArray, results)) {
+        eventToUserToRole.set(eventId, map);
+    }
+
+    // return results in correct order
+    return userEvents.map(({ userId, eventId }) => eventToUserToRole.get(eventId)?.get(userId) ?? "none")
+
 }
 

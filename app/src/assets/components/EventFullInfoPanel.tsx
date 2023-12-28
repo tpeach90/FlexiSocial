@@ -1,16 +1,13 @@
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native"
-import TagButton from "./TagButton"
-import { useDispatch, useSelector } from "react-redux";
-import { setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
-import { colors, universalStyles } from "../../config/config";
-import { State } from "../../redux/state";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, faPen, faPerson, faQuestion, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { ScrollView, StyleSheet, Text, View } from "react-native"
+import { useDispatch } from "react-redux";
+import { setEventInfoPanelStatus } from "../../redux/actions";
 import EventInfo from "./EventInfo";
 import EventChatShort from "./EventChatShort";
-import { useLazyQuery, useQuery } from "@apollo/client";
-import { GET_CHAT, GET_EVENT, GET_EVENT_AND_CHAT } from "../../graphql/queries";
-import { Shadow } from "react-native-shadow-2";
+import { useQuery } from "@apollo/client";
+import { GET_EVENT } from "../../graphql/queries";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AppStackParamList } from "../../navigation/paramLists";
 
 
 interface EventFullInfoPanelProps {
@@ -31,16 +28,13 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
             id : props.eventId,
         }
     });
-
-    // lazy query to load the chat panel.
-    const [getChat, {loading: chatLoading, error: chatError, data: chatData}] = useLazyQuery(GET_CHAT, {
-        variables: {
-            id: props.eventId,
-            maxChatMessages: 3
-        }
-    })
-
+    const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
     const dispatch = useDispatch();
+
+    function navigateToUser(userId: number) {
+        // dispatch(setUserScreenId(userId));
+        navigation.navigate("UserScreen", {id: userId});
+    }
 
     if (eventError) console.error(eventError);
 
@@ -70,7 +64,7 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
                                 interestedCount: eventData.event.stats.interestedCount,
                                 organizerDisplayName: eventData.event.creator.displayName
                             }}
-                            onEventOrganizerPressed={() => console.log("Event organizer pressed")}
+                            onEventOrganizerPressed={() => navigateToUser(eventData.event.creator.id)}
                             onCloseEvent={() => dispatch(setEventInfoPanelStatus({active: false}))}
                             onImGoingPressed={() => console.log("I'm going")}
                             onImInterestedPressed={() => console.log("I'm interested")}
@@ -95,7 +89,9 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
                     onImGoingPressed={() => console.log("I'm going")}
                     onImInterestedPressed={() => console.log("I'm interested")}
                 /> */}
-                <EventChatShort/>
+                <EventChatShort
+                    eventId={1}
+                />
                 {/* <EventInfo />
                 <EventInfo /> */}
             </View>

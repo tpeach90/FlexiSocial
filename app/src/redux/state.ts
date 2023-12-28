@@ -30,6 +30,9 @@ export type StateNonPersistentSlice = {
             eventId?: number
         }
         
+    },
+    userScreen: {
+        
     }
 }
 
@@ -60,5 +63,8 @@ export const initialNonPersistentState: StateNonPersistentSlice = {
         eventInfo: {
             active: false,
         }
+    },
+    userScreen: {
+        
     }
 }

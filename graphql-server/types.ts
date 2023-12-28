@@ -1,4 +1,5 @@
 export type UserRole = 'standard' | 'moderator' | 'administrator'
+export type UserEventRole = 'interested' | 'going' | 'organizer' | "none"
 
 export type User = {
     id: number,

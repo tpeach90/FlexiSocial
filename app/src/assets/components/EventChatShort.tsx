@@ -4,51 +4,108 @@ import ChatMessage from "./ChatMessage"
 import LargeButton from "./LargeButton"
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 import { faMessage } from "@fortawesome/free-solid-svg-icons"
+import { useLazyQuery, useQuery } from "@apollo/client"
+import { GET_CHAT } from "../../graphql/queries"
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { AppStackParamList } from "../../navigation/paramLists"
 
 interface EventChatProps {
-
+    eventId?: number
 }
 
 export default function EventChatShort(props: EventChatProps) {
+
+    const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+    const { loading: chatLoading, error: chatError, data: chatData } = useQuery(GET_CHAT, {
+        variables: {
+            id: props.eventId,
+            maxChatMessages: 3
+        },
+        skip: !props.eventId,
+        fetchPolicy: "no-cache"
+    });
+
 
     function seeFullConversation() {
         console.log("See full conversation")
     }
 
-    return (
-        <View style={styles.container}>
-            <View style={{flexDirection:"row", alignItems:"center"}}>
-                <Text style={styles.heading}>Talk to others about this event</Text>
-                <TouchableOpacity style={styles.messageCounter} onPress={seeFullConversation}>
-                    <FontAwesomeIcon icon={faMessage} style={styles.messageIcon} size={14}/>
-                    <Text style={styles.messageCounterCount} >15</Text>
-                </TouchableOpacity>
+    if (chatLoading) {
+        return <Text>Loading</Text>
+    }
+    else if (chatError) {
+        return <Text>An error occurred. Please try again later.</Text>
+    } 
+    else if (chatData) {
+        return (
+            <View style={styles.container}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.heading}>Talk to others about this event</Text>
+                    <TouchableOpacity style={styles.messageCounter} onPress={seeFullConversation}>
+                        <FontAwesomeIcon icon={faMessage} style={styles.messageIcon} size={14} />
+                        <Text style={styles.messageCounterCount}>{chatData.event.chat.count}</Text>
+                    </TouchableOpacity>
+                </View>
+                <Text style={styles.subheading}>Most recent messages</Text>
+
+                {Array.from(chatData.event.chat.messageQuery.messages).map((message: any, i) => 
+                    <ChatMessage
+                        image={require("../../assets/images/defaultPfp.png")}
+                        userDisplayName={message.author.displayName}
+                        content={message.content}
+                        eventRole={message.author.roleInEvent}
+                        onPressUser={() => navigation.navigate("UserScreen", { id: message.author.id })}
+                        replyeeDisplayName={message.reply?.author.displayName}
+                        onPressReplyee={() => console.log(`Focus chat message ${message.reply?.id}`)}
+                        key={i}
+                    />
+                )}
+
+                {/* perhaps need to consider doing something different when there are few enough messages to fit on the screen without going into the separate chat view. TODO. */}
+                <LargeButton text="See full conversation" onPress={seeFullConversation} style={{ alignSelf: "center", marginTop: 10 }} />
+
             </View>
-            <Text style={styles.subheading}>Most recent messages</Text>
+        )
+    }
+    else {
+        return <Text>An error occurred. Please try again later.</Text>
+    } 
+    // return (
+    //     <View style={styles.container}>
+    //         <View style={{flexDirection:"row", alignItems:"center"}}>
+    //             <Text style={styles.heading}>Talk to others about this event</Text>
+    //             <TouchableOpacity style={styles.messageCounter} onPress={seeFullConversation}>
+    //                 <FontAwesomeIcon icon={faMessage} style={styles.messageIcon} size={14}/>
+    //                 <Text style={styles.messageCounterCount} >15</Text>
+    //             </TouchableOpacity>
+    //         </View>
+    //         <Text style={styles.subheading}>Most recent messages</Text>
 
-            <ChatMessage 
-                image={require("../../assets/images/defaultPfp.png")} 
-                userDisplayName={"John Doe"} 
-                content={"Hi, I just have a question, quisque vulputate, libero in conguee cursus, felis mi dapibus sem, sed tincidunt nibh tellus nec ex? The fioweojf fweo f oiko row c."} 
-                eventRole={"interested"} 
-                onPressUser={() => console.log("John Doe pressed.")}
-            />
+    //         <ChatMessage 
+    //             image={require("../../assets/images/defaultPfp.png")} 
+    //             userDisplayName={"John Doe"} 
+    //             content={"Hi, I just have a question, quisque vulputate, libero in conguee cursus, felis mi dapibus sem, sed tincidunt nibh tellus nec ex? The fioweojf fweo f oiko row c."} 
+    //             eventRole={"interested"} 
+    //             onPressUser={() => console.log("John Doe pressed.")}
+    //         />
 
-            <ChatMessage
-                image={require("../../assets/images/defaultPfp.png")}
-                userDisplayName={"John Doe"}
-                content={"Hi, I just have a question, quisque vulputate, libero in conguee cursus, felis mi dapibus sem, sed tincidunt nibh tellus nec ex? The fioweojf fweo f oiko row c."}
-                eventRole={"organizer"}
-                onPressUser={() => console.log("John Doe pressed.")}
-                replyeeDisplayName="John Doe"
-                onPressReplyee={() => console.log("Replyee pressed.")}
-            />
+    //         <ChatMessage
+    //             image={require("../../assets/images/defaultPfp.png")}
+    //             userDisplayName={"John Doe"}
+    //             content={"Hi, I just have a question, quisque vulputate, libero in conguee cursus, felis mi dapibus sem, sed tincidunt nibh tellus nec ex? The fioweojf fweo f oiko row c."}
+    //             eventRole={"organizer"}
+    //             onPressUser={() => console.log("John Doe pressed.")}
+    //             replyeeDisplayName="John Doe"
+    //             onPressReplyee={() => console.log("Replyee pressed.")}
+    //         />
 
-            {/* perhaps need to consider doing something different when there are few enough messages to fit on the screen without going into the separate chat view. TODO. */}
-            <LargeButton text="See full conversation" onPress={seeFullConversation} style={{alignSelf:"center", marginTop:10}}/>
+    //         {/* perhaps need to consider doing something different when there are few enough messages to fit on the screen without going into the separate chat view. TODO. */}
+    //         <LargeButton text="See full conversation" onPress={seeFullConversation} style={{alignSelf:"center", marginTop:10}}/>
 
-        </View>
-    )
+    //     </View>
+    // )
 }
 
 const styles = StyleSheet.create({

@@ -8,6 +8,7 @@ import {gql} from "@apollo/client";
 export const GET_EVENT = gql`
     query GetEvent($id: Int!) {
         event(id: $id) {
+            id
             name
             description
             creator {
@@ -32,21 +33,23 @@ export const GET_EVENT = gql`
 export const GET_CHAT = gql`
     query GetChat($id: Int!, $maxChatMessages: Int!) {
         event(id: $id) {
+            id
             chat {
                 count
                 messageQuery(last: $maxChatMessages) {
-                    hasMore
                     messages {
                         id
                         author {
                             id
                             displayName
+                            roleInEvent(eventId:$id)
                         }
                         time
                         content
                         reply {
                             id
                             author {
+                                id
                                 displayName
                             }
                         }
@@ -60,6 +63,7 @@ export const GET_CHAT = gql`
 export const GET_EVENT_AND_CHAT = gql`
     query GetEventAndChat($id: Int!, $maxChatMessages: Int!) {
         event(id: $id) {
+            id
             name
             description
             creator {
@@ -110,5 +114,19 @@ export const GET_EVENTS_ON_SCREEN = gql`
             }
         }
     }
+`
 
+export const GET_USER = gql`
+    query GetUser($id:Int!) {
+        user(id:$id) {
+            id
+            displayName
+            role
+            bio
+            stats {
+                eventsOrganizedCount
+            }
+            registerTimestamp
+        }
+    }
 `

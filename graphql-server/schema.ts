@@ -28,10 +28,23 @@ export const schema = createSchema<GraphQLContext>({
             DOG_YEARS: 'DOG_YEARS',
         },
 
+        UserEventRole: {
+            interested: "interested",
+            going: "going",
+            organizer: "organizer",
+            none: "none"
+        },
+
+        UserRole: {
+            standard: "standard",
+            moderator: "moderator",
+            administrator: "administrator"
+        },
+
         Query: {
             // hello: () => 'world',
             // // user: (_, {id}, context) => users.find(user => user.id == id),
-            // user: (_, { id }, { userLoader }) => userLoader.load(id),
+            user: (_, { id }, { userLoader }) => userLoader.load(id),
             // // me: (_, args, context: GraphQLContext) => context.currentUser,
 
             event: (_, { id }, { eventLoader }) => eventLoader.load(id),
@@ -63,7 +76,11 @@ export const schema = createSchema<GraphQLContext>({
                     .map((eventId) => eventLoader.load(eventId))
             ,
 
-            stats: ({id}, {}, context) => ({id})
+            stats: ({id}, {}, context) => ({id}),
+            
+            roleInEvent: ({id}, {eventId}, {userEventRoleLoader}) =>
+                userEventRoleLoader.load({eventId, userId: id})
+            
         },
 
         UserStats: {

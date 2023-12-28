@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AppStackParamList } from "./paramLists";
 import { MapScreen } from "../assets/screens/MapScreen";
+import { UserScreen } from "../assets/screens/UserScreen";
 
 
 
@@ -15,6 +16,7 @@ export default function AppStack(): JSX.Element {
             screenOptions={{ headerShown: false }}
         >
             <stack.Screen name="MapScreen" component={MapScreen} />
+            <stack.Screen name="UserScreen" component={UserScreen} />
         </stack.Navigator>
     )
 }

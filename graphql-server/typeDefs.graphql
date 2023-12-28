@@ -34,13 +34,28 @@ enum YearsUnit {
 
 scalar Interval
 
+enum UserEventRole {
+    interested
+    going
+    organizer
+    none
+}
+
+enum UserRole {
+    standard
+    moderator
+    administrator
+}
+
 type User {
     id: Int!
     displayName: String!
-    role: String!
+    role: UserRole!
     bio: String
     eventsOrganized: [Event!]
     stats: UserStats!
+    registerTimestamp: Timestamp!
+    roleInEvent(eventId: Int!): UserEventRole
 }
 
 type UserStats {
@@ -60,6 +75,7 @@ type Event {
     duration: Interval
     stats: EventStats!
     chat: Chat!
+    createdTimestamp: Timestamp!
 }
 
 type EventStats {

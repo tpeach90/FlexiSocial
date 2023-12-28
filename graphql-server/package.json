@@ -8,13 +8,15 @@
   },
   "dependencies": {
     "@apollo/subgraph": "^2.6.2",
+    "@types/underscore": "^1.11.15",
     "bcryptjs": "2.4.3",
     "dataloader": "^2.2.2",
     "graphql": "^16.8.1",
     "graphql-scalars": "^1.22.4",
     "graphql-yoga": "^5.0.2",
     "jsonwebtoken": "9.0.2",
-    "postgresql-client": "^2.10.1"
+    "postgresql-client": "^2.10.1",
+    "underscore": "^1.13.6"
   },
   "devDependencies": {
     "@prisma/client": "5.6.0",

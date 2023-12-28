@@ -16,24 +16,24 @@ DO $$
     BEGIN
 
         -- create some users.
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
-        VALUES ('John Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m John, I like to go to more casual events.\nInstagram: @john.doe\nTwitter: @thejohndoe31')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
+        VALUES ('John Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m John, I like to go to more casual events.\nInstagram: @john.doe\nTwitter: @thejohndoe31', '2023-6-16 17:51:23')
         RETURNING Id INTO johnsId;
 
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
-        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We won''t get along unless you''ve seen Star Wars. If not, looking at the plot summary on Wikipedia is good enough.\nSnapchat: joedoesnotbloggs8')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
+        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We won''t get along unless you''ve seen Star Wars. If not, looking at the plot summary on Wikipedia is good enough.\nSnapchat: joedoesnotbloggs8', '2023-12-21 06:15:18')
         RETURNING Id INTO joesId;
 
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio)
-        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
+        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯', '2023-12-21 06:15:18')
         RETURNING Id INTO phoebesID;
 
-        INSERT INTO Users(DisplayName, Role, Email, HashedPassword)
-        VALUES ('Jamir Ochoa', 'standard', 'jamirwochoa@whitehouse.gov', 'password')
+        INSERT INTO Users(DisplayName, Role, Email, HashedPassword, RegisterTimestamp)
+        VALUES ('Jamir Ochoa', 'standard', 'jamirwochoa@whitehouse.gov', 'password', '2004-04-02 06:15:18')
         RETURNING Id INTO jamirsId;
 
         -- John Doe creates an event
-        INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration, Capacity)
+        INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration, Capacity, CreatedTimestamp)
         VALUES (
             'Pub meetup', 
             'Have a friendly meetup at a pub and do a pub quiz', 
@@ -42,7 +42,8 @@ DO $$
             'The Pied Calf, Spalding',
             '2024-1-16 19:00:00+00',
             '03:00:00',
-            10
+            10,
+            '2023-12-27 21:44:23+00'
         ) RETURNING Id INTO pubMeetupID;
 
         -- John Doe is made an organizer of this event

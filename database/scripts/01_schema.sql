@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS ChatMessages CASCADE;
 DROP TABLE IF EXISTS UserEventRoles CASCADE;
 DROP TABLE IF EXISTS ChatReplies CASCADE;
 DROP TYPE IF EXISTS USER_ROLE;
-DROP TYPE IF EXISTS USER_EVENT_ROLE;
+DROP TYPE IF EXISTS USER_EVENT_ROLE;grap
 DROP EXTENSION IF EXISTS postgis;
 
 CREATE EXTENSION postgis;
@@ -25,6 +25,7 @@ CREATE TABLE Users (
     DisplayName varchar(255) NOT NULL,
     Role USER_ROLE NOT NULL,
     Bio varchar(8000),
+    RegisterTimestamp timestamp NOT NULL,
     Email varchar(255) NOT NULL,
     HashedPassword varchar(255) NOT NULL
 );
@@ -38,6 +39,7 @@ CREATE TABLE Events (
     Point geometry(Point,4326) NOT NULL,
     Location varchar(255) NOT NULL,
     Time timestamp with time zone NOT NULL,
+    CreatedTimestamp timestamp NOT NULL,
     Duration interval NOT NULL,
     Capacity numeric CHECK (Capacity > 0),
 

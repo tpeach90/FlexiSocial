@@ -27,4 +27,4 @@ run with
     docker run -d -p 5432:5432 --net flexisocial-net --name database flexisocial-database
 
 open a database terminal with
-    docker exec -it database psql -U "flexisocial-user" flexisocial
+    docker exec -it "database-flexisocial" psql -U "flexisocial-user" flexisocial
