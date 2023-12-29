@@ -9,6 +9,7 @@ export const colors = {
     gray: "#BCBDC0",
     primary: "#6963BD",
     secondary: "#72E060",
+    tertiary: "#FFB169",
     background: "#FFF"
 }
 
@@ -40,7 +41,7 @@ export const universalStyles = StyleSheet.create({
     },
     p: {
         fontFamily: fonts.primary.regular,
-        fontSize: 12,
+        fontSize: 14,
         color: colors.black
     }
 })

@@ -17,15 +17,15 @@ DO $$
 
         -- create some users.
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('John Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m John, I like to go to more casual events.\nInstagram: @john.doe\nTwitter: @thejohndoe31', '2023-6-16 17:51:23')
+        VALUES ('Jeff Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m Jeff, I like to go to more casual events, like the ones one my website:\nhttps://www.taylorswift.com/\n\nInstagram: [@taylorswift](https://www.instagram.com/taylorswift/)\nTwitter: [@taylorswift13](https://twitter.com/taylorswift13)', '2023-6-16 17:51:23')
         RETURNING Id INTO johnsId;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We won''t get along unless you''ve seen Star Wars. If not, looking at the plot summary on Wikipedia is good enough.\nSnapchat: joedoesnotbloggs8', '2023-12-21 06:15:18')
+        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We **won''t** get along unless you''ve seen _Star Wars_. If not, looking at the plot summary on Wikipedia is good enough. *May the force be with you!*\n\nSnapchat: [joedoesnotbloggs8](https://www.snapchat.com/add/joedoesnotbloggs8)', '2023-12-21 06:15:18')
         RETURNING Id INTO joesId;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯', '2023-12-21 06:15:18')
+        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯', '2021-12-21 06:15:18')
         RETURNING Id INTO phoebesID;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, RegisterTimestamp)
@@ -102,7 +102,7 @@ DO $$
             pubMeetupID,
             phoebesID,
             '2023-12-04 16:13:21+00',
-            'I can''t wait! Does anyone want to meet up before it starts?'
+            'I can''t _wait_! Does anyone want to meet up before it starts?'
         );
 
 

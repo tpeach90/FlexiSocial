@@ -7,6 +7,8 @@ import { State } from "../../redux/state";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, faPen, faPerson, faQuestion, faXmark } from "@fortawesome/free-solid-svg-icons";
 import LargeButton from "./LargeButton";
+import IconButton from "./IconButton";
+import UserTextRenderer from "../../utils/UserTextRenderer";
 
 type EventInfoContent = {
     title: string,
@@ -77,12 +79,14 @@ export default function EventInfo(props: EventInfoProps) {
             <View style={styles.headingBar}>
                 <Text style={styles.h1}>{props.content?.title}</Text>
                 <View style={styles.iconButtonsContainer} >
-                    <TouchableOpacity style={styles.iconButton} onPress={eventOptionsPressed}>
-                        <FontAwesomeIcon icon={faEllipsisVertical} style={styles.iconButtonIcon}/>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton} onPress={closeEventPressed}>
-                        <FontAwesomeIcon icon={faXmark} style={styles.iconButtonIcon} />
-                    </TouchableOpacity>
+                    <IconButton
+                        icon={faEllipsisVertical}
+                        onPress={eventOptionsPressed}
+                    />
+                    <IconButton
+                        icon={faXmark}
+                        onPress={closeEventPressed}
+                    />
                 </View>
       
             </View>
@@ -108,7 +112,9 @@ export default function EventInfo(props: EventInfoProps) {
                 </View>
             </View>
 
-            <Text style={styles.p} >{props.content?.description}</Text>
+            {/* <Text style={styles.p} >{props.content?.description}</Text> */}
+            <UserTextRenderer>{props.content?.description ?? ""}</UserTextRenderer>
+
 
             <View style={styles.statsItemRow} >
                 <View style={styles.statsItem}>
@@ -154,18 +160,6 @@ const styles = StyleSheet.create({
     iconButtonsContainer: {
         justifyContent: "flex-end",
         flexDirection: "row",
-    },
-    iconButton: {
-        backgroundColor:colors.primary,
-        aspectRatio:1,
-        borderRadius:100,
-        alignItems:"center",
-        justifyContent: "center",
-        marginHorizontal:3
-    },
-    iconButtonIcon: {
-        color:colors.white,
-        marginHorizontal:12
     },
     row : {
         flex:1

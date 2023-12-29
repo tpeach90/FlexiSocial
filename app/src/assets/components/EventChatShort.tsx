@@ -24,7 +24,7 @@ export default function EventChatShort(props: EventChatProps) {
             maxChatMessages: 3
         },
         skip: !props.eventId,
-        fetchPolicy: "no-cache"
+        // fetchPolicy: "no-cache"
     });
 
 

@@ -3,6 +3,8 @@ import { colors, fonts, universalStyles } from "../../config/config"
 import { UserEventRole } from "../../utils/types"
 import { faArrowLeft, faEllipsisVertical, faLeftLong } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
+import Flair from "./Flair"
+import UserTextRenderer from "../../utils/UserTextRenderer"
 
 interface ChatMessageProps {
     image?: any,
@@ -29,23 +31,25 @@ export default function ChatMessage(props: ChatMessageProps) {
                         {(() => {
                             switch (props.eventRole) {
                                 case "going":
-                                    return (
-                                        <View style={[styles.eventRole, { backgroundColor: colors.gray }]}>
-                                            <Text style={styles.eventRoleText}>Going</Text>
-                                        </View>
-                                    )
+                                    return <Flair
+                                        color={colors.gray}
+                                        text="Going"
+                                        style={styles.flair}
+                                    />
+                                    
                                 case "interested":
-                                    return (
-                                        <View style={[styles.eventRole, { backgroundColor: colors.gray }]}>
-                                            <Text style={styles.eventRoleText}>Interested</Text>
-                                        </View>
-                                    )
+                                    return <Flair
+                                        color={colors.gray}
+                                        text="Interested"
+                                        style={styles.flair}
+                                    />
+                                    
                                 case "organizer":
-                                    return (
-                                        <View style={[styles.eventRole, { backgroundColor: colors.secondary }]}>
-                                            <Text style={styles.eventRoleText}>Organizer</Text>
-                                        </View>
-                                    )
+                                    return <Flair
+                                        color={colors.secondary}
+                                        text="Organizer"
+                                        style={styles.flair}
+                                    />
                             }
                         })()}
                     </View>
@@ -72,7 +76,8 @@ export default function ChatMessage(props: ChatMessageProps) {
                     return undefined
                 })()}
 
-                <Text style={styles.content}>{props.content}</Text>
+                {/* <Text style={styles.content}>{props.content}</Text> */}
+                <UserTextRenderer>{props.content}</UserTextRenderer>
             </View>
         </View>
     )
@@ -81,7 +86,8 @@ export default function ChatMessage(props: ChatMessageProps) {
 const styles = StyleSheet.create({
     container: { 
         flexDirection: "row",
-        marginTop:5
+        marginTop:5,
+        // width:"100%"
     },
     userDescription: { 
         flexDirection: "row",
@@ -96,19 +102,8 @@ const styles = StyleSheet.create({
         fontFamily: fonts.primary.bold,
         fontSize:12
     },
-    eventRole: {
-        paddingHorizontal:6,
-        paddingVertical:1,
-        borderRadius:7,
-        marginLeft: 5
-    },
     verticalElipsis: {
         color:colors.primary
-    },
-    eventRoleText: {
-        color:colors.black,
-        fontFamily: fonts.primary.bold,
-        fontSize: 12
     },
     content: {
         ...universalStyles.p,
@@ -126,5 +121,8 @@ const styles = StyleSheet.create({
     replyeeArrowIcon: {
         color:colors.primary,
         marginRight:5
-    }
+    },
+    flair: {
+        marginLeft:5
+    },
 })

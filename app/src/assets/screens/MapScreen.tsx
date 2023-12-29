@@ -119,6 +119,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                     )
                 }}
                 onRegionChangeComplete={getNewData}
+                // moveOnMarkerPress={false}
             >
                 {markers.map((marker, i) => 
                     <Marker

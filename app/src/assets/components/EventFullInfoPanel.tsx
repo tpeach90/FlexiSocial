@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native"
+import { BackHandler, ScrollView, StyleSheet, Text, View } from "react-native"
 import { useDispatch } from "react-redux";
 import { setEventInfoPanelStatus } from "../../redux/actions";
 import EventInfo from "./EventInfo";
@@ -8,6 +8,7 @@ import { GET_EVENT } from "../../graphql/queries";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../navigation/paramLists";
+import { useEffect } from "react";
 
 
 interface EventFullInfoPanelProps {
@@ -31,8 +32,23 @@ export default function EventFullInfoPanel(props: EventFullInfoPanelProps) {
     const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
     const dispatch = useDispatch();
 
+    // // handle back button presses.
+    // useEffect(() => {
+    //     const backAction = () => {
+    //         dispatch(setEventInfoPanelStatus({ active: false }))
+    //         return true;
+    //     };
+
+    //     const backHandler = BackHandler.addEventListener(
+    //         'hardwareBackPress',
+    //         backAction,
+    //     );
+
+    //     return () => backHandler.remove();
+    // }, []);
+
+
     function navigateToUser(userId: number) {
-        // dispatch(setUserScreenId(userId));
         navigation.navigate("UserScreen", {id: userId});
     }
 
