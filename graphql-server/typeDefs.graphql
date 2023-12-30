@@ -1,8 +1,5 @@
-# this is a special type - another special type is Mutation..
 type Query {
     user(id: Int): User
-    # hello: String
-    # me: User
 
     eventsInBBox(
         east: Float!, 
@@ -15,6 +12,8 @@ type Query {
     ): EventsInBBoxQueryResult!
 
     event(id:Int): Event
+
+    me: SensitiveUserInfo
 },
 
 type EventsInBBoxQueryResult {
@@ -23,14 +22,10 @@ type EventsInBBoxQueryResult {
 }
 
 type Mutation {
-    signup(email: String!, password: String!, name: String!, age: Int!): AuthPayload
+    signup(email: String!, password: String!, displayName: String!): AuthPayload
     login(email: String!, password: String!): AuthPayload
 }
 
-enum YearsUnit {
-    HUMAN_YEARS
-    DOG_YEARS
-}
 
 scalar Interval
 
@@ -45,6 +40,14 @@ enum UserRole {
     standard
     moderator
     administrator
+}
+
+# only accessible to a signed-in user.
+type SensitiveUserInfo {
+    partiallyHiddenEmail: String!
+    # eventsGoing: [Event!]
+    # eventsInterested: [Event!]
+    user: User!
 }
 
 type User {
@@ -126,5 +129,4 @@ type ChatMessage {
 
 type AuthPayload {
   token: String
-  user: User
 }

@@ -6,9 +6,10 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getUser, queryChatMessages } from './queries';
+import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
+import { createUser } from './sql/updates';
 
 // [] means list
 //  ! means non-nullable
@@ -21,12 +22,6 @@ export const schema = createSchema<GraphQLContext>({
 
         // some types that are not included in yoga by default.
         Timestamp: TimestampResolver,
-
-        // this converts the enum into something we can test against, I think.
-        YearsUnit: {
-            HUMAN_YEARS: 'HUMAN_YEARS',
-            DOG_YEARS: 'DOG_YEARS',
-        },
 
         UserEventRole: {
             interested: "interested",
@@ -58,8 +53,16 @@ export const schema = createSchema<GraphQLContext>({
                 const eventIds = await getEventIdsInTiles(tilesLoaded, {earliest, latest});
 
                 return {tilesLoaded, eventIds};
-            }
+            },
 
+            me: async (_, { }, { currentUserId }) => currentUserId ? getSensitiveUserInfo(currentUserId) : null // SensitiveUserInfo
+
+        },
+
+        SensitiveUserInfo: {
+            user: async ({id}, {}, {userLoader}) => userLoader.load(id),
+            
+            
         },
 
         EventsInBBoxQueryResult: {
@@ -128,74 +131,42 @@ export const schema = createSchema<GraphQLContext>({
 
  
         Mutation: {
-        //     async signup(
-        //         parent: unknown,
-        //         args: {
-        //             email: string,
-        //             password: string,
-        //             name: string,
-        //             age: number
-        //         },
-        //         context: GraphQLContext  
-        //     ) {
-        //         // encrypt the user's password.
-        //         const password = await hash(args.password, 10)
 
-        //         // store the new user in the database.
-        //         // const user = await context.prisma.user.create({
-        //         //     data: { ...args, password }
-        //         // })
+            signup: async (_, { email, password, displayName }, {}) => {
+                // @todo check that the inputs are valid
+
+                // encrypt the user's password with random salt.
+                const hashedPassword = await hash(password, 10)
+
+                // add to database
+                const uuid = await createUser(displayName, email, hashedPassword);          
+
+                // create signed token to give to the user
+                // todo create a better token in the future - this is unsafe
+                const token = sign({ uuid }, APP_SECRET)
                 
-        //         // Tom: here just add them to the users data structure for now.
-        //         // create a new ID:
-        //         var id = 0;
-        //         while (id.toString() in users) id++;
-        //         // add user
-        //         const user = {
-        //             age: args.age,
-        //             name: args.name,
-        //             password: password,
-        //             email: args.email,
-        //             id: id.toString()
-        //         }
-        //         // users.push(user);
+                return { token}
+            },
+
+            login: async (_, { email, password }, {}) => {
+                
+                const uuid = await checkEmailAndPassword(email, password);
+
+                if (!uuid) {
+                    throw new GraphQLError("Email or password incorrect")
+                }
+                
+                // todo create a better token in the future - this is unsafe
+                const token = sign({userUuid: uuid}, APP_SECRET);
+
+                return {token};
+            }
+        },
 
 
-        //         // 3
-        //         const token = sign({ userId: id }, APP_SECRET)
-
-        //         // 4
-        //         return { token, user }
-        //     },
-
-        //     // async login(parent: unknown, args:{email: string, password: string /*unhashed password*/ }, context: GraphQLContext) {
-
-        //     //     // look for the user with matching email
-        //     //     const user = users.find(user => user.email == args.email);
-
-
-        //     //     // compare hashed passwords
-        //     //     if (!user || ! await compare(args.password, user.password))
-        //     //         throw new GraphQLError("Username or password incorrect")
-            
-        //     //     const token = sign({userID: user.id}, APP_SECRET);
-
-        //     //     return {token, user};
-        //     // }
-        // },
-
-        // User: {
-        //     age: (parent, args, context) => {
-        //         switch (args.unit) {
-        //             case "DOG_YEARS":
-        //                 return parent.age * 7
-        //             case "HUMAN_YEARS":
-        //                 return parent.age
-        //         }
-        //     }
         }
     }
-})
+)
 
 
 

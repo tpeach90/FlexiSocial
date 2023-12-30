@@ -1,10 +1,12 @@
 import { GraphQLError } from "graphql";
-import { connection } from "./connection";
-import { GraphQLContext } from "./context";
+import { connection } from "../connection";
+import { GraphQLContext } from "../context";
 
-import {Event as EventObj, User, UserEventRole} from "./types"
-import { tileToBBox } from "./tiles";
+import {Event as EventObj, User, UserEventRole} from "../types"
+import { tileToBBox } from "../tiles";
 import _, { zip } from "underscore";
+import { compare } from "bcryptjs";
+import { assert } from "console";
 
 
 /**
@@ -646,3 +648,129 @@ export async function getUserEventRoles(userEvents: readonly {userId: number, ev
 
 }
 
+/**
+ * Check the user's login credentials.
+ * @param email 
+ * @param password 
+ * @returns null if incorrect credentials. Otherwise returns the uuid.
+ */
+export async function checkEmailAndPassword(email: string, password: string) {
+
+    const query = `
+        SELECT
+            Uuid,
+            HashedPassword
+        FROM Users
+        WHERE Email = $1
+    `
+
+    const result = await connection.query(query, { params: [email] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    if (result.rows.length != 1) {
+        // email incorrect
+        // note: it might be a little sus that incorrect emails get rejected faster than incorrect passwords
+        // because you don't have to compare the hashes
+        // I don't know if this is a common thing, but maybe introduce a delay here as if the compare function had run??
+        return null;
+    }
+
+    const uuid: string = result.rows[0][0];
+    const hashedPassword: string = result.rows[0][1];
+
+    // compare password
+    const valid = await compare(password, hashedPassword);
+
+    if (!valid) {
+        // password incorrect
+        return null
+    }
+
+    return uuid;
+}
+
+export async function userUuidToUserId(uuid:string) {
+
+    const query = `
+        SELECT id
+        FROM Users
+        WHERE Uuid = $1
+    `
+
+    const result = await connection.query(query, { params: [uuid] });
+
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    if (result.rows.length != 1) {
+        return null;
+    }
+
+    const id : number = result.rows[0][0];
+
+    return id;
+
+}
+
+export async function getSensitiveUserInfo(userId:number) {
+
+    const query = `
+        SELECT Email
+        FROM Users
+        WHERE Id = $1
+    `
+
+    const result = await connection.query(query, { params: [userId] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    if (result.rows.length != 1) {
+        console.log("getSensitiveUserInfo was called on a userId that doesn't exist. THIS SHOULD NOT HAPPEN. INVESTIGATE IMMEDIATELY")
+        return null;
+    }
+
+    const email: string = result.rows[0][0];
+
+    // obscure some parts of the email with stars..
+    const parts = email.split("@");
+
+    if (parts.length != 2) {
+        throw new Error("Malformed email address??")
+    }
+
+    const [old0, old1] = parts;
+
+    let new0 :string = "*";
+    let new1 :string = "*";
+
+    if (old0.length <= 2)
+        new0 = "*".repeat(old0.length);
+    else 
+        new0 = old0[0] + "*".repeat(old0.length - 2) + old0.at(-1);
+
+    if (old1.length <= 2)
+        new1 = "*".repeat(old1.length);
+    else
+        new1 = old1[0] + "*".repeat(old1.length - 2) + old1.at(-1);
+
+    const partiallyHiddenEmail = new0 + "@" + new1;
+
+    return {
+        partiallyHiddenEmail,
+        id: userId
+    }
+
+    
+
+
+}

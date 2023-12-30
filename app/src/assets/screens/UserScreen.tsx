@@ -33,6 +33,9 @@ export const UserScreen: React.FC<UserScreen> = ({navigation, route}) => {
             return <Text>An error occurred. Please try again later.</Text>
         }
         else if (userData) {
+            if (!userData.user) {
+                <Text>User not found.</Text>
+            }
             return (
                 <View>
                     <Image 

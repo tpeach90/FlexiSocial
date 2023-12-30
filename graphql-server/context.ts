@@ -3,14 +3,16 @@ import { YogaInitialContext } from 'graphql-yoga'
 import { authenticateUser } from './auth'
 import { User, UserEventRole } from './types'
 import DataLoader from 'dataloader'
-import { getChatMessages, getEvents, getUserEventRoles, getUsers } from './queries'
+import { getChatMessages, getEvents, getUserEventRoles, getUsers } from './sql/queries'
 
 export type GraphQLContext = {
     // currentUser: null | User,
     eventLoader: DataLoader<number, any, number>,
     chatMessageLoader: DataLoader<number, any, number>,
     userLoader: DataLoader<number, any, number>
-    userEventRoleLoader: DataLoader<any, any, any>
+    userEventRoleLoader: DataLoader<any, any, any>,
+
+    currentUserId: number | null
 
 
 }
@@ -24,6 +26,7 @@ export async function createContext(initialContext: YogaInitialContext): Promise
         userLoader: new DataLoader(getUsers),
         userEventRoleLoader: new DataLoader(getUserEventRoles /*, {
             cacheKeyFn: ({userId, eventId}) => `${userId}_${eventId}`
-        }*/)
+        }*/),
+        currentUserId: await authenticateUser(initialContext.request)
     }
 }
