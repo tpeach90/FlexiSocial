@@ -68,8 +68,11 @@ export const UserScreen: React.FC<UserScreen> = ({navigation, route}) => {
 
                     <View style={styles.mainContent} >
 
-                        <UserTextRenderer style={styles.bio}>{userData.user.bio}</UserTextRenderer>
-
+                        {userData.user.bio 
+                            ? <UserTextRenderer style={styles.bio}>{userData.user.bio}</UserTextRenderer>
+                            : undefined
+                        }
+                        
                         <View style={styles.statsItem}>
                             <FontAwesomeIcon icon={faCalendarDays} style={styles.calendarIcon} size={20} />
                             <Text style={styles.statsIconText}>Flexisocial user for {moment(new Date(userData.user.registerTimestamp)).fromNow(true)}</Text>

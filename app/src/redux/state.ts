@@ -56,7 +56,7 @@ export const initialPersistentState: StatePersistentSlice = {
     }
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "app",
+    screenStack: "auth",
     mapScreen: {
         markers:[],
         tilesLoaded:[],

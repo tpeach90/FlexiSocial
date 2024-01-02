@@ -130,3 +130,13 @@ export const GET_USER = gql`
         }
     }
 `
+
+export const GET_MY_ID = gql`
+    query GetMyId {
+        me {
+            user {
+                id
+            }
+        }
+    }
+`

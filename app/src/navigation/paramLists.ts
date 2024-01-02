@@ -1,7 +1,8 @@
 
 export type AuthStackParamList = {
     Welcome: undefined,
-    Login: undefined
+    Login: undefined,
+    CreateAccountScreen: undefined
 }
 
 export type AppStackParamList = {
@@ -12,5 +13,8 @@ export type AppStackParamList = {
 }
 
 export type DebugStackParamList = {
-    DebugScreen: undefined
+    DebugScreen: undefined,
+    UserScreen: {
+        id: number
+    }
 }

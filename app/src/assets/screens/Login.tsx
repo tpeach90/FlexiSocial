@@ -1,12 +1,13 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../../navigation/paramLists";
-import { SafeAreaView, Text, TextInput, TouchableOpacity } from "react-native";
+import { Text, TextInput, TouchableOpacity } from "react-native";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserToken } from "../../redux/actions";
-import { State } from "../../redux/reducer";
+// import { State } from "../../redux/reducer";
 import endpoints from "../../utils/endpoints";
+import { SafeAreaView } from "react-native-safe-area-context"
 // import { storage } from "../../storage/storage";
 
 

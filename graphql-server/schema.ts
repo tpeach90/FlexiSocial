@@ -157,7 +157,7 @@ export const schema = createSchema<GraphQLContext>({
                 }
                 
                 // todo create a better token in the future - this is unsafe
-                const token = sign({userUuid: uuid}, APP_SECRET);
+                const token = sign({uuid}, APP_SECRET);
 
                 return {token};
             }

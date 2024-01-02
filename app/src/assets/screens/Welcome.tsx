@@ -1,10 +1,11 @@
 import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../../navigation/paramLists";
-import { Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { colors, fonts } from "../../config/config";
 import { Shadow } from "react-native-shadow-2";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 
@@ -22,17 +23,29 @@ export const Welcome: React.FC<WelcomeScreenProps> = (props) => {
     }
 
     function createAccountPressed() {
-        console.log("Create an account")
+        navigation.navigate("CreateAccountScreen")
     }
 
 
 
-    return (
-        <SafeAreaView style={styles.screen}>
-            <StatusBar
-                // bar at the top of the screen that shows the time, etc
-                backgroundColor={colors.primary}
-            />
+    return (<>
+        <StatusBar
+            // make the status bar transparent on android
+            backgroundColor={"#00000000" /*transparent*/}
+            translucent={true}
+        />
+
+        {/* background color of top bar/notch */}
+        <SafeAreaView 
+            style={styles.topSafeArea}
+            edges={["top"]}
+        />
+
+        <SafeAreaView 
+            style={styles.screen}
+            edges={["left", "right", "bottom"]}    
+        >
+
             <View style={styles.headerContainer} >
                 <View style={styles.header}>
 
@@ -94,7 +107,7 @@ export const Welcome: React.FC<WelcomeScreenProps> = (props) => {
 
             </View>  
         </SafeAreaView>
-    )
+    </>)
     
 }
 
@@ -104,6 +117,9 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
         flex: 1
+    },
+    topSafeArea: {
+        backgroundColor: colors.primary
     },
     header: {
         backgroundColor: colors.primary,

@@ -1,11 +1,11 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { DebugStackParamList } from "./paramLists";
 import { DebugScreen } from "../assets/screens/DebugScreen";
+import { UserScreen } from "../assets/screens/UserScreen";
 
 
 
 export default function DebugStack(): JSX.Element {
-
     // create new stack for navigation - back button etc.
     const stack = createNativeStackNavigator<DebugStackParamList>();
 
@@ -15,6 +15,7 @@ export default function DebugStack(): JSX.Element {
             screenOptions={{ headerShown: false }}
         >
             <stack.Screen name="DebugScreen" component={DebugScreen} />
+            <stack.Screen name="UserScreen" component={UserScreen} />
         </stack.Navigator>
     )
 }

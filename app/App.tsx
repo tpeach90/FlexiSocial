@@ -14,9 +14,11 @@ import AppNav from './src/navigation/AppNav';
 import { PersistGate } from 'redux-persist/integration/react';
 import persistentStore from "./src/redux/store"
 import { Text } from 'react-native';
-import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache, from } from '@apollo/client';
+import { ApolloClient, ApolloLink, ApolloProvider, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { onError } from "@apollo/client/link/error" 
 import { backendURL } from './src/config/config';
+import { State } from './src/redux/state';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 const { store, persistor } = persistentStore();
 
 // Graphql stuff =====================
@@ -28,8 +30,21 @@ const errorLink = onError(({graphQLErrors, networkError}) => {
   }
 });
 
+// add the authorization token to the header for graphql server
+const authMiddleware = new ApolloLink((operation, forward) => {
+  const state : State = store.getState();
+  const token = state.persistent.userToken;
+  operation.setContext({
+    headers: {
+      authorization: token ? `Bearer ${token}` : "",
+    },
+  });
+  return forward(operation);
+});
+
 const link = from([
   errorLink,
+  authMiddleware,
   new HttpLink({uri: backendURL})
 ]);
 
@@ -50,15 +65,15 @@ function App(): JSX.Element {
   // };
 
   return (
-    // <AuthProvider>
-    <ApolloProvider client={client}>
-      <Provider store={store} >
-        <PersistGate persistor={persistor} loading={<Text>Loading</Text>}>
-          <AppNav/>
-        </PersistGate>
-      </Provider>
-    </ApolloProvider>
-    // </AuthProvider>
+    <Provider store={store} >
+      <PersistGate persistor={persistor} loading={<Text>Loading</Text>}>
+        <ApolloProvider client={client}>
+          <SafeAreaProvider>
+            <AppNav />
+          </SafeAreaProvider>
+        </ApolloProvider>
+      </PersistGate>
+    </Provider>
   );
 }
 

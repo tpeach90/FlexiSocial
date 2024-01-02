@@ -1,12 +1,13 @@
-import { StyleSheet, TouchableOpacity, ViewStyle } from "react-native"
+import { StyleSheet, TextStyle, TouchableOpacity, ViewStyle } from "react-native"
 import { colors } from "../../config/config"
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
+import { FontAwesomeIcon, FontAwesomeIconStyle } from "@fortawesome/react-native-fontawesome"
 import { IconDefinition } from "@fortawesome/free-solid-svg-icons"
 
 
 interface IconButtonProps {
 
     style?: ViewStyle | ViewStyle[],
+    iconStyle?: FontAwesomeIconStyle,
     icon: IconDefinition,
     onPress?: () => void
 }
@@ -15,7 +16,7 @@ export default function IconButton(props: IconButtonProps) {
 
     return (
         <TouchableOpacity style={[styles.iconButton, props.style]} onPress={props.onPress}>
-            <FontAwesomeIcon icon={props.icon} style={styles.iconButtonIcon} />
+            <FontAwesomeIcon icon={props.icon} style={[styles.iconButtonIcon, props.iconStyle]} />
         </TouchableOpacity>
     )
 }

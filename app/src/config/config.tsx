@@ -7,10 +7,13 @@ export const colors = {
     black : "#000",
     white: "#FFF",
     gray: "#BCBDC0",
+    light_gray: "#EBEBEB",
     primary: "#6963BD",
     secondary: "#72E060",
     tertiary: "#FFB169",
-    background: "#FFF"
+    background: "#FFF",
+    invalid_light: "#FFD8B4",
+    invalid_dark: "#FF7A00",
 }
 
 export const fonts = {
@@ -29,6 +32,11 @@ export const fonts = {
 
 
 export const universalStyles = StyleSheet.create({
+    screenHeaderText: {
+        fontFamily: fonts.primary.bold,
+        fontSize:30,
+        color:colors.white
+    },
     h1: {
         fontFamily: fonts.primary.bold,
         fontSize:18,
