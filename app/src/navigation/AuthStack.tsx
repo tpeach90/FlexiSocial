@@ -3,6 +3,7 @@ import { AuthStackParamList } from "./paramLists";
 import { Welcome } from "../assets/screens/Welcome";
 import { Login } from "../assets/screens/Login";
 import { CreateAccountScreen } from "../assets/screens/CreateAccountScreen";
+import { LoginScreen } from "../assets/screens/LoginScreen";
 
 
 export default function AuthStack() : React.JSX.Element {
@@ -18,6 +19,7 @@ export default function AuthStack() : React.JSX.Element {
             <stack.Screen name="Welcome" component={Welcome} />
             <stack.Screen name="Login" component={Login} />
             <stack.Screen name="CreateAccountScreen" component={CreateAccountScreen} />
+            <stack.Screen name="LoginScreen" component={LoginScreen} />
         </stack.Navigator>
     )
     

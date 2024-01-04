@@ -137,7 +137,7 @@ export const schema = createSchema<GraphQLContext>({
 
                 // encrypt the user's password with random salt.
                 const hashedPassword = await hash(password, 10)
-
+                
                 // add to database
                 const uuid = await createUser(displayName, email, hashedPassword);          
 

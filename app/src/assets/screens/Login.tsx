@@ -5,9 +5,9 @@ import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserToken } from "../../redux/actions";
-// import { State } from "../../redux/reducer";
 import endpoints from "../../utils/endpoints";
 import { SafeAreaView } from "react-native-safe-area-context"
+import { State } from "../../redux/state";
 // import { storage } from "../../storage/storage";
 
 

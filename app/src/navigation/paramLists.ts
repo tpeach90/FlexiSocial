@@ -2,7 +2,8 @@
 export type AuthStackParamList = {
     Welcome: undefined,
     Login: undefined,
-    CreateAccountScreen: undefined
+    CreateAccountScreen: undefined,
+    LoginScreen: undefined
 }
 
 export type AppStackParamList = {

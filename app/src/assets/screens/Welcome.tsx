@@ -19,7 +19,7 @@ export const Welcome: React.FC<WelcomeScreenProps> = (props) => {
 
 
     function signInPressed() {
-        navigation.navigate("Login")
+        navigation.navigate("LoginScreen")
     }
 
     function createAccountPressed() {

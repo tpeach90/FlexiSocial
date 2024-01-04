@@ -719,6 +719,25 @@ export async function userUuidToUserId(uuid:string) {
 
 }
 
+export async function accountWithEmailExists(email:string): Promise<boolean>{
+
+    const query = `
+        SELECT Count(*)
+        FROM Users
+        WHERE Email = $1
+    `
+
+    const result = await connection.query(query, { params: [email] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    return result.rows[0][0];
+
+}
+
 export async function getSensitiveUserInfo(userId:number) {
 
     const query = `

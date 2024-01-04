@@ -33,6 +33,7 @@ CREATE TABLE Users (
     Bio varchar(8000),
     RegisterTimestamp timestamp NOT NULL DEFAULT current_timestamp,
     Email varchar(255) UNIQUE NOT NULL,
+    EmailIsVerified boolean NOT NULL DEFAULT FALSE,
     HashedPassword varchar(255) NOT NULL
 
 );

@@ -2,7 +2,7 @@
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../../navigation/paramLists";
-import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FetchResult, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, universalStyles } from "../../config/config";
 import IconButton from "../components/IconButton";
@@ -13,6 +13,12 @@ import { useRef, useState } from "react";
 import CheckBox from "@react-native-community/checkbox";
 import EntryBox from "../components/EntryBox";
 import * as EmailValidator from 'email-validator';
+import LoadingModal from "../components/LoadingModal";
+import { useMutation } from "@apollo/client";
+import { SIGN_UP } from "../../graphql/mutations";
+import { useDispatch } from "react-redux";
+import { Action } from "../../redux/reducer";
+import { client } from "../../utils/apolloClientConfig";
 
 
 
@@ -24,6 +30,7 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
     // const confirmEmailRef = useRef<TextInput>(null);
     const passwordRef = useRef<TextInput>(null);
     const confirmPasswordRef = useRef<TextInput>(null);
+    const displayNameRef = useRef<TextInput>(null);
 
     const [emailValid, setEmailValid] = useState(true);
     // const [confirmEmailValid, setConfirmEmailValid] = useState(true);
@@ -34,16 +41,121 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
     // const [confirmEmail, setConfirmEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
+    const [displayName, setDisplayName] = useState<string>("");
 
 
     const [over18Checkbox, setOver18Checkbox] = useState(false);
     const [tsAndCsCheckbox, setTsAndCsCheckbox] = useState(false);
 
+    const [submitting, setSubmitting] = useState<boolean>(false);
 
+    const dispatch = useDispatch();
+
+    const [signUpMutation, {data, loading, error}] = useMutation(SIGN_UP);
+
+
+    function getValidityMessages(email: string, password: string, confirmPassword: string, displayName: string, over18Checkbox: boolean, tsAndCsCheckbox: boolean) {
+
+        let problems = [];
+
+        if (email === "")
+            problems.push("Please enter an email address.")
+        else if (!EmailValidator.validate(email))
+            problems.push("Please enter a valid email address.")
+
+        if (password === "")
+            problems.push("Please enter a password.")
+        else if (password.length < 8)
+            problems.push("Password must be at least 8 characters.")
+
+        if (confirmPassword != password)
+            problems.push("Passwords do not match.")
+
+        if (displayName === "")
+            problems.push("Please enter a display name.")
+
+        if (!over18Checkbox)
+            problems.push("You need to be at least 18 years old to use this app. Please check the box if you are 18 or older.")
+
+        if (!tsAndCsCheckbox)
+            problems.push("Please check the box to confirm that you have read and agreed to the Terms and Conditions and Privacy Policy.")
+
+        return problems
+    }
+
+    const validToSubmit = getValidityMessages(email, password, confirmPassword, displayName, over18Checkbox, tsAndCsCheckbox).length == 0;
+
+    async function submit() {
+
+        // verify the stuff added.
+        const problems = getValidityMessages(email, password, confirmPassword, displayName, over18Checkbox, tsAndCsCheckbox);
+        if (problems.length == 1) {
+            Alert.alert("Details not complete", problems[0]);
+            return;
+        }
+        else if (problems.length > 1) {
+            Alert.alert("Details not complete", problems.map(p => ` • ${p}`).join("\n"))
+            return; 
+        }
+
+        // prevent this function from being called more than once.
+        if (submitting) return;
+        setSubmitting(true);
+
+        // // register account.
+        // let mutationResult: any;
+        // try {
+        //     mutationResult = await signUpMutation({
+        //         variables: {
+        //             email, password, displayName
+        //         }
+        //     })
+        // }
+
+        signUpMutation({
+            variables: {
+                email, password, displayName
+            }
+        })
+
+        .then(mutationResult => {
+
+            if (mutationResult.errors) {
+                Alert.alert(mutationResult.errors.map(e => e.message).join("\n"))
+                setSubmitting(false);
+                return;
+            }
+
+            if (mutationResult.data) {
+                // flush graphql cache
+                client.resetStore();
+
+                dispatch<Action>({ type: "setUserToken", payload: { value: mutationResult.data.signup.token} })
+                dispatch<Action>({ type: "setScreenStack", payload: { value: "app" } })
+                // setSubmitting(false);
+                return;
+            }
+
+        })
+
+        .catch(mutationError => {
+            Alert.alert(mutationError.message);
+            setSubmitting(false);
+            return;
+        })
+
+
+
+
+
+    }
 
 
     return (
         <>
+            {/* prevent the user doing anything if submitting. */}
+            <LoadingModal visible={submitting}/>
+
             <StatusBar
                 // make the status bar transparent on android
                 backgroundColor={"#00000000" /*transparent*/}
@@ -87,6 +199,18 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
 
                         <Text style={styles.p}>You will use your email address and password to sign in.</Text>
 
+                        <Text style={styles.p}>
+                            <Text>{"Already have an account? "}</Text>
+                            <Text
+                                style={{ color: colors.primary, fontWeight: "bold" }}
+                                onPress={() => {
+                                    navigation.navigate("LoginScreen");
+                                }}
+                            >
+                                Sign in
+                            </Text>
+                        </Text>
+
 
                         <EntryBox
                             title="Email address"
@@ -100,15 +224,13 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                                 },
                                 onChangeText(text) {
                                     setEmail(text);
-                                    if (text == "")
-                                        setEmailValid(true);
-                                    else
-                                        setEmailValid(EmailValidator.validate(text));
+                                    setEmailValid(text == "" || EmailValidator.validate(text));
 
                                 },
                                 blurOnSubmit: false,
                                 returnKeyType: "next",
-                                spellCheck: false
+                                spellCheck: false,
+                                editable: !submitting
                             }}
                         />
 
@@ -135,18 +257,20 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
 
                         <EntryBox
                             title="Password"
-                            valid={true}
-                            message="you're bad."
+                            valid={passwordValid}
+                            message="Password must be at least 8 characters"
                             style={styles.entryBox}
                             ref={passwordRef}
                             textInputProps={{
                                 onSubmitEditing: () => confirmPasswordRef.current?.focus(),
                                 onChangeText: (text) => {
                                     setPassword(text);
+                                    setPasswordValid(text === "" || text.length >= 8)
                                 },
                                 blurOnSubmit: false,
                                 secureTextEntry: true,
-                                returnKeyType: "next"
+                                returnKeyType: "next",
+                                editable: !submitting
                             }}
                         />
 
@@ -159,19 +283,39 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                             textInputProps={{
                                 blurOnSubmit: true,
                                 secureTextEntry: true,
-                                returnKeyType: "default",
+                                returnKeyType: "next",
+                                onSubmitEditing: () => displayNameRef.current?.focus(),
                                 onChangeText: (text) => {
                                     setConfirmPassword(text);
-                                    if (text == "")
-                                        setConfirmPasswordValid(true)
-                                    else
-                                        setConfirmPasswordValid(text === password)
-                                }
+                                    setConfirmPasswordValid(text == "" || text === password)
+                                },
+                                editable: !submitting
                             }}
                         />
 
                         {/* spacer */}
                         <View style={{marginTop:10}} />
+                        
+                        <Text style={styles.p}>Your display name is how you will appear to others on the app. You can always change this later.</Text>
+                        <EntryBox
+                            title="Display name"
+                            valid={true}
+                            // message="Passwords do not match"
+                            style={styles.entryBox}
+                            ref={displayNameRef}
+                            textInputProps={{
+                                blurOnSubmit: true,
+                                spellCheck: false,
+                                returnKeyType: "default",
+                                onChangeText: (text) => {
+                                    setDisplayName(text);
+                                },
+                                editable: !submitting
+                            }}
+                        />
+
+                        {/* spacer */}
+                        <View style={{ marginTop: 10 }} />
 
 
                         <View style={styles.checkboxRow}>
@@ -182,7 +326,7 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                                 onValueChange={(newValue) => setOver18Checkbox(newValue)}
                                 tintColors={{ true: colors.primary }}
                             />
-                            <Text style={styles.checkBoxText}>I confirm that I am at least 18 (eighteen) years of age</Text>
+                            <Text style={styles.checkBoxText} onPress={() => setOver18Checkbox(!over18Checkbox)}>I confirm that I am at least 18 (eighteen) years of age</Text>
                         </View>
 
                         <View style={styles.checkboxRow}>
@@ -194,8 +338,8 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                                 tintColors={{ true: colors.primary }}
                                 
                             />
-                            <Text style={styles.checkBoxText}>
-                                <Text>I confirm that I have read and agreed to our </Text>
+                            <Text style={styles.checkBoxText} onPress={() => setTsAndCsCheckbox(!tsAndCsCheckbox)}>
+                                <Text>I confirm that I have read and agreed to the </Text>
                                 <Text style={{color: colors.primary}} onPress={() => console.log("go to terms and conditions")}>Terms and Conditions </Text>
                                 <Text>and </Text>
                                 <Text style={{ color: colors.primary }} onPress={() => console.log("go to privacy policy")}>Privacy Policy</Text>
@@ -203,10 +347,11 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
 
                         </View>
 
-                        {/* Sign in button */}
+                        {/* Create account button */}
                         <TouchableOpacity
-                            onPress={() => console.log("create account")}
+                            onPress={submit}
                             style={[styles.buttonContainer]}
+                            disabled={submitting}
                         >
                             <Shadow
                                 style={[{ width: "100%" }]}
@@ -215,8 +360,8 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                                 startColor={"#AAA"}
                                 endColor={colors.white}
                             >
-                                <View style={styles.signInButton}>
-                                    <Text style={[styles.buttonFont, { fontSize: 20 }]}>Create account</Text>
+                                <View style={[styles.signInButton, validToSubmit ? undefined : {backgroundColor:colors.light_gray}]}>
+                                    <Text style={[styles.buttonFont, { fontSize: 20 }, validToSubmit ? undefined : { color: colors.gray }]}>Create account</Text>
                                 </View>
                             </Shadow>
                         </TouchableOpacity>

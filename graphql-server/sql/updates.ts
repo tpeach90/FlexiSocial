@@ -5,16 +5,33 @@ import { GraphQLContext } from "../context";
 import { Event as EventObj, User, UserEventRole } from "../types"
 import { tileToBBox } from "../tiles";
 import { zip } from "underscore";
+import * as EmailValidator from 'email-validator';
+import { accountWithEmailExists } from "./queries";
+
 
 
 /**
  * 
  * @param displayName 
  * @param email 
- * @param hashedPassword 
+ * @param hashedPassword NOT CHECKED in this function.
  * @returns uuid of new user
  */
 export async function createUser(displayName:string, email:string, hashedPassword:string) {
+
+    // check the inputs against the database schema.
+    if (displayName.length < 1 || displayName.length>255) {
+        throw new GraphQLError("Display name must be between 1 and 255 characters (inclusive).")
+    }
+
+    // check the email format is valid
+    if (!EmailValidator.validate(email)) {
+        throw new GraphQLError("Email not valid")
+    };
+
+    if (await accountWithEmailExists(email)) {
+        throw new GraphQLError("Account with this email address already exists.")
+    }
 
     const update = `
         INSERT INTO Users (
@@ -26,7 +43,8 @@ export async function createUser(displayName:string, email:string, hashedPasswor
         RETURNING Uuid
     `
 
-    const result = await connection.query(update, { params: [displayName, email, hashedPassword]})
+    const result = await connection.query(update, { params: [displayName, email, hashedPassword] })
+
 
     if (!result.rows || result.rows.length != 1) {
         console.error("Error for update: \n" + update)
