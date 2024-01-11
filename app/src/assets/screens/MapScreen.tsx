@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
-import { PermissionsAndroid, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,11 +16,37 @@ import Geolocation from "@react-native-community/geolocation";
 import { State } from "../../redux/state";
 import { useLazyQuery } from "@apollo/client";
 import { GET_EVENTS_ON_SCREEN } from "../../graphql/queries";
+import AppMenu from "../components/AppMenu"
+
+const menuWidth = 300;
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 
 export const MapScreen: React.FC<MapScreenProps> = (props) => {
+
+    // const [menuActive, setMenuActive] = useState(false);
+    // const menuPan = useRef(new Animated.Value(0)).current;
+    // const menuPanResponder = useRef(PanResponder.create({
+    //     onMoveShouldSetPanResponder: (event, gestureState) => {
+    //         event.stopPropagation();
+    //         return false;
+    //     },
+    //     // map dx directly to the animated variable.
+    //     onPanResponderMove: (event, gestureState) =>  {
+    //         event.stopPropagation();
+    //         menuPan.setValue((menuActive? menuWidth: 0) + gestureState.dx)
+    //     },
+    //     // onShouldBlockNativeResponder: () => true
+    //     onStartShouldSetPanResponderCapture: (e, gestureState) => true,
+    //     onPanResponderStart: (event, gestureState) => event.stopPropagation(),
+    //     onPanResponderEnd: (event, gestureState) => event.stopPropagation(),
+    //     onStartShouldSetPanResponder: () => false,
+    //     // onStartShouldSetPanResponderCapture: () => false,
+    //     // onMoveShouldSetPanResponder: () => false,
+    //     onMoveShouldSetPanResponderCapture: () => false,
+
+    // })).current;
 
     const mapRef = useRef<MapView>(null);
     // const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
@@ -99,58 +125,89 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
 
     return (
-        <View style={styles.container}>
-            <MapView
-                ref={mapRef}
-                style={styles.map}
-                showsUserLocation={true}
-                showsMyLocationButton={true}
-                customMapStyle={googleMapsStyle}
-                mapPadding={{
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    top: 45 // this prevents icons being hidden by the tags.
-                    // TODO may cause issues on IOS - map padding might need to be increased to account for the notch
-                }}
-                onMapReady={() => {
-                    PermissionsAndroid.request(
-                        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                    )
-                }}
-                onRegionChangeComplete={getNewData}
+        <>
+            <StatusBar
+                // make the status bar transparent on android
+                backgroundColor={"#00000000" /*transparent*/}
+                translucent={true}
+                barStyle={"dark-content"}
+            />
+            <View style={styles.container}>
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    showsUserLocation={true}
+                    showsMyLocationButton={true}
+                    customMapStyle={googleMapsStyle}
+                    mapPadding={{
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        top: 45 // this prevents icons being hidden by the tags.
+                        // TODO may cause issues on IOS - map padding might need to be increased to account for the notch
+                    }}
+                    onMapReady={() => {
+                        PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                        )
+                    }}
+                    onRegionChangeComplete={getNewData}
                 // moveOnMarkerPress={false}
-            >
-                {markers.map((marker, i) => 
-                    <Marker
-                        coordinate={{latitude: marker.lat, longitude: marker.lon}}
-                        pinColor={colors.primary}
-                        key={i}
-                        onPress={() => dispatch(setEventInfoPanelStatus({active: true, eventId:marker.id}))}
+                >
+                    {markers.map((marker, i) =>
+                        <Marker
+                            coordinate={{ latitude: marker.lat, longitude: marker.lon }}
+                            pinColor={colors.primary}
+                            key={i}
+                            onPress={() => dispatch(setEventInfoPanelStatus({ active: true, eventId: marker.id }))}
                         // TODO add a custom marker here!!
                         // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
-                    />
-                )}
+                        />
+                    )}
 
-            </MapView>
+                </MapView>
 
 
 
-            <SafeAreaView 
-                pointerEvents="box-none" // allows users to interact with the map behind this view.
-                style={StyleSheet.absoluteFillObject}
-            >   
-                <MapScreenTagBar/>
+                <SafeAreaView
+                    pointerEvents="box-none" // allows users to interact with the map behind this view.
+                    style={[StyleSheet.absoluteFillObject]}
+                >
 
-                <View style={StyleSheet.absoluteFillObject}>
-                    {eventInfoPanelStatus.active 
-                        ? <EventFullInfoPanel eventId={eventInfoPanelStatus.eventId} />
-                        : undefined
-                    }
-                </View>
 
-            </SafeAreaView>
-        </View>
+
+                    {/* menu at the side of the screen */}
+
+                    {/* <Animated.View
+                        style={{
+                            transform: [{ translateX: menuPan }],
+                            width:0,
+
+                            // position:"absolute"
+                        }}
+                        // pointerEvents={"box-none"}
+                        {...menuPanResponder.panHandlers}
+                    >
+
+                        <AppMenu
+                            open={true}
+                            width={menuWidth}
+                        />
+                    </Animated.View> */}
+
+
+                    {/* <MapScreenTagBar /> */}
+
+                    <View style={{flex:1}}>
+                        {eventInfoPanelStatus.active
+                            ? <EventFullInfoPanel eventId={eventInfoPanelStatus.eventId} />
+                            : undefined
+                        }
+                    </View>
+
+                </SafeAreaView>
+            </View>
+        </>
     )
 
 }

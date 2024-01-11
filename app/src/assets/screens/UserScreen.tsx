@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../navigation/paramLists";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@apollo/client";
 import { GET_USER } from "../../graphql/queries";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -102,22 +102,32 @@ export const UserScreen: React.FC<UserScreen> = ({navigation, route}) => {
 
     
     return (
-        <SafeAreaView>
-            <View style={styles.header}>
-                <IconButton
-                    icon={faChevronLeft}
-                    onPress={navigation.goBack}
-                />
-                <IconButton
-                    icon={faEllipsisV}
-                    onPress={() => console.log("elipsis pressed")}
-                />
-            </View>
+        <>
+            <StatusBar
+                // make the status bar transparent on android
+                backgroundColor={"#0000"}
+                translucent={true}
+                barStyle={"dark-content"}
+                animated={true}
+            />
+            <SafeAreaView>
+                <View style={styles.header}>
+                    <IconButton
+                        icon={faChevronLeft}
+                        onPress={navigation.goBack}
+                    />
+                    <IconButton
+                        icon={faEllipsisV}
+                        onPress={() => console.log("elipsis pressed")}
+                    />
+                </View>
 
-            {content}
+                <ScrollView>
+                    {content}
+                </ScrollView>
 
-        </SafeAreaView>
-            
+            </SafeAreaView>
+        </>
 
     )
 

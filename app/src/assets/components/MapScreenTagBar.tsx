@@ -45,7 +45,7 @@ export default function MapScreenTagBar(props: MapScreenTagBarProps) {
                     alignSelf: 'flex-start',
                     flexDirection: "row",
                     paddingVertical: 10,
-                    // backgroundColor:colors.secondary
+                    // backgroundColor:colors.primary
                 }}
 
             >

@@ -36,7 +36,7 @@ DO $$
         INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration, Capacity, CreatedTimestamp)
         VALUES (
             'Pub meetup', 
-            'Have a friendly meetup at a pub and do a pub quiz', 
+            E'Have a friendly meetup at a pub and do a pub quiz\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam pretium libero ornare iaculis eleifend. In hac habitasse platea dictumst. Proin maximus egestas convallis. Suspendisse pellentesque eleifend lacus ut condimentum. Donec ex eros, convallis ac leo a, aliquam facilisis metus. Suspendisse sit amet nunc ultricies, sodales ex congue, gravida elit. Aliquam elit nulla, vehicula nec felis nec, convallis volutpat lorem.\nDuis eleifend dignissim justo, sed dignissim urna dictum ac. Mauris posuere lectus quis imperdiet tempor. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus ornare nisi sit amet ex placerat, sit amet mattis ligula pretium. Nunc ac dolor id felis semper interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Ut et tristique augue.', 
             johnsId, 
             ST_SetSRID(ST_MakePoint(-0.15334250560616502, 52.78767525040571),4326), -- Pied Calf in Spalding
             'The Pied Calf, Spalding',
