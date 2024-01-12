@@ -6,7 +6,7 @@ import ParsedText from 'react-native-parsed-text';
 import { colors, fonts, universalStyles } from '../config/config';
 
 
-const bracketedURLPattern = /\[(.*)\]\((.*)\)/;
+const bracketedURLPattern = /\[([^\]]+)\]\(([^)]+)\)/;
 
 interface UserTextRendererProps {
     children: string | string[],
@@ -43,12 +43,14 @@ export default function UserTextRenderer(props: UserTextRendererProps) {
             style={[styles.text, props.style]}
             parse={
                 [
-                    // link with brackets
-                    { pattern: bracketedURLPattern, style: styles.link, renderText: (_, matches) => matches[1], onPress: handleBracketedURLPress },
+                    // link with brackets (hidden link)
+                    { pattern: bracketedURLPattern, style: styles.link, renderText: (_, matches) => matches[1] + "🔗", onPress: handleBracketedURLPress },
                     // default matches
-                    { type: 'url', style: styles.underlinedLink, onPress: handleUrlPress },
-                    { type: 'phone', style: styles.underlinedLink, onPress: handlePhonePress },
-                    { type: 'email', style: styles.underlinedLink, onPress: handleEmailPress },
+                    { type: 'url', style: styles.link, onPress: handleUrlPress },
+                    { type: 'phone', style: styles.link, onPress: handlePhonePress },
+                    { type: 'email', style: styles.link, onPress: handleEmailPress },
+                    // paragraph spacing - duplicate newline chars
+                    {pattern: /\n/, style: styles.newline, renderText: () => "\n\n"},
                     // literal *
                     { pattern: /\*\*/, style: styles.text, renderText: () => "*" },
                     // literal _
@@ -62,7 +64,7 @@ export default function UserTextRenderer(props: UserTextRendererProps) {
                     { pattern: /_([^\*_]+)_/, style: styles.italics, renderText: (_, matches) => matches[1] },
                 ]
             }
-            childrenProps={{ allowFontScaling: false }}
+            // childrenProps={{ allowFontScaling: true }}
         >
             {Array.isArray(props.children) ? props.children.join("") : props.children}
         </ParsedText>
@@ -87,6 +89,11 @@ const styles = StyleSheet.create({
 
     text: {
         ...universalStyles.p,
+    },
+
+    newline: {
+        ...universalStyles.p,
+        fontSize: universalStyles.p.fontSize/2
     },
 
     boldItalics: {

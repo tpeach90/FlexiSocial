@@ -10,20 +10,25 @@ import { addMarkers, setEventInfoPanelStatus, setMapScreenToggle } from "../../r
 import MapScreenTagBar from "../components/MapScreenTagBar";
 import EventInfo from "../components/EventInfo";
 import EventFullInfoPanel from "../components/EventFullInfoPanel";
-import {  useEffect, useRef, useState } from "react";
+import {  useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GetLocation from "react-native-get-location";
 import Geolocation from "@react-native-community/geolocation";
 import { State } from "../../redux/state";
 import { useLazyQuery } from "@apollo/client";
 import { GET_EVENTS_ON_SCREEN } from "../../graphql/queries";
 import AppMenu from "../components/AppMenu"
+import { BottomSheetScrollView, BottomSheetView, BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import EventInfoNew from "../components/EventInfoNew";
+import EventInfoHeader from "../components/EventInfoHeader";
+import { Action } from "../../redux/reducer";
+import EventChatShort from "../components/EventChatShort";
 
 const menuWidth = 300;
 
 
 type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 
-export const MapScreen: React.FC<MapScreenProps> = (props) => {
+export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
 
     // const [menuActive, setMenuActive] = useState(false);
     // const menuPan = useRef(new Animated.Value(0)).current;
@@ -51,12 +56,51 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
     const mapRef = useRef<MapView>(null);
     // const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
     const { markers, tilesLoaded } = useSelector((state: State) => state.nonPersistent.mapScreen);
-    const eventInfoPanelStatus = useSelector((state: State) => state.nonPersistent.mapScreen.eventInfo)
+    const eventInfoPanelStatus = useSelector((state: State) => state.nonPersistent.mapScreen.eventInfo);
+
+    // bottom sheet stuff.
+    const sheetRef = useRef<BottomSheetModal>(null);
+    const snapPoints = useMemo(() => ["30%", "90%"], []);
+    const handleSheetChange = useCallback((index:number) => {
+        if (index >= 1 && /* just for ts to be happy */ eventInfoPanelStatus.active) {
+            dispatch<Action>({
+                type:"setEventInfoPanelStatus",
+                payload: {
+                    ...eventInfoPanelStatus,
+                    displayChat: true
+                }
+            })
+        }
+    }, [eventInfoPanelStatus]);
+    const handleXButtonPress = useCallback(() => {
+        sheetRef.current?.dismiss()
+    }, [])
+    const handleClosePress = useCallback(() => {
+        dispatch<Action>({type: "setEventInfoPanelStatus", payload: {active: false}})
+    }, []);
+    // // close the bottom sheet if back is pressed.
+    // doesn't work!!
+    // useEffect(() => {
+    //     navigation.addListener('beforeRemove', (e) => {
+    //         if (!eventInfoPanelStatus.active) {
+    //             sheetRef.current?.dismiss();
+    //             e.preventDefault();
+    //         }
+    // })}, []);
+
+    // open the bottom sheet if activated.
+    useEffect(() => {
+        if (eventInfoPanelStatus.active) {
+            sheetRef.current?.present();
+        }
+    }, [eventInfoPanelStatus.active])
 
     // query to load markers
     const [getMarkers, { loading: markersLoading, error: markersError, data: markersData }] = useLazyQuery(GET_EVENTS_ON_SCREEN)
 
     const dispatch = useDispatch();
+
+
 
     // set initial location
     useEffect(() => {
@@ -82,7 +126,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
             console.error(markersError)
         }
         if (!markersLoading && markersData) {
-            console.log("received data: " + JSON.stringify(markersData))
+            // console.log("received data: " + JSON.stringify(markersData))
             if (markersData.eventsInBBox.tilesLoaded.length != 0) {
                 dispatch(addMarkers(markersData.eventsInBBox.events, markersData.eventsInBBox.tilesLoaded))
             }
@@ -125,14 +169,18 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
 
     return (
-        <>
+        <BottomSheetModalProvider>
             <StatusBar
                 // make the status bar transparent on android
                 backgroundColor={"#00000000" /*transparent*/}
                 translucent={true}
                 barStyle={"dark-content"}
             />
+
+
             <View style={styles.container}>
+
+                {/* map. */}
                 <MapView
                     ref={mapRef}
                     style={styles.map}
@@ -159,7 +207,15 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                             coordinate={{ latitude: marker.lat, longitude: marker.lon }}
                             pinColor={colors.primary}
                             key={i}
-                            onPress={() => dispatch(setEventInfoPanelStatus({ active: true, eventId: marker.id }))}
+                            onPress={() => dispatch<Action>({
+                                type: "setEventInfoPanelStatus",
+                                payload: {
+                                    active: true,
+                                    eventId: marker.id,
+                                    title: marker.name,
+                                    displayChat: false
+                                }
+                            })}
                         // TODO add a custom marker here!!
                         // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
                         />
@@ -168,7 +224,7 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
                 </MapView>
 
 
-
+                {/* things that sit on top of the map. */}
                 <SafeAreaView
                     pointerEvents="box-none" // allows users to interact with the map behind this view.
                     style={[StyleSheet.absoluteFillObject]}
@@ -176,9 +232,9 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
 
 
-                    {/* menu at the side of the screen */}
+                    {/* menu at the side of the screen
 
-                    {/* <Animated.View
+                    <Animated.View
                         style={{
                             transform: [{ translateX: menuPan }],
                             width:0,
@@ -198,16 +254,43 @@ export const MapScreen: React.FC<MapScreenProps> = (props) => {
 
                     {/* <MapScreenTagBar /> */}
 
-                    <View style={{flex:1}}>
+                    {/* <View style={{flex:1}}>
                         {eventInfoPanelStatus.active
                             ? <EventFullInfoPanel eventId={eventInfoPanelStatus.eventId} />
                             : undefined
                         }
-                    </View>
+                    </View> */}
+
+                    {/* Event sheet. */}
+                    <BottomSheetModal
+                        ref={sheetRef}
+                        snapPoints={snapPoints}
+                        onChange={handleSheetChange}
+                        style={{ paddingHorizontal: 25 }}
+                        onDismiss={handleClosePress}
+                        enablePanDownToClose={true}
+                        backgroundStyle={{backgroundColor: "#FFFE"}}
+                    >
+                        <BottomSheetView>
+                            <EventInfoHeader
+                                title={eventInfoPanelStatus.title ?? ""}
+                                closeEventPressed={handleXButtonPress}
+                            />
+                        </BottomSheetView>
+                        <BottomSheetScrollView>
+                            <EventInfoNew
+                                eventId={eventInfoPanelStatus.eventId}
+                            />
+                            {eventInfoPanelStatus.displayChat 
+                                ? <EventChatShort eventId={eventInfoPanelStatus.eventId} /> 
+                                : undefined
+                            }
+                        </BottomSheetScrollView>
+                    </BottomSheetModal>
 
                 </SafeAreaView>
             </View>
-        </>
+        </BottomSheetModalProvider>
     )
 
 }

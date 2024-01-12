@@ -23,11 +23,15 @@ export type StateNonPersistentSlice = {
         tilesLoaded: number[],
         eventInfo: {
             active: true,
-            eventId: number
+            eventId: number,
+            title: string,
+            displayChat: boolean
         } |
         {
             active: false,
-            eventId?: number
+            eventId?: number,
+            title?: string,
+            displayChat?: boolean
         }
         
     },
@@ -56,7 +60,7 @@ export const initialPersistentState: StatePersistentSlice = {
     }
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "debug",
+    screenStack: "app",
     mapScreen: {
         markers:[],
         tilesLoaded:[],

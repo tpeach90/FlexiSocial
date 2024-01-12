@@ -48,7 +48,7 @@ export default function EventChatShort(props: EventChatProps) {
                         <Text style={styles.messageCounterCount}>{chatData.event.chat.count}</Text>
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.subheading}>Most recent messages</Text>
+                <Text style={styles.subheading}>{chatData.event.chat.count > 0 ? "Most recent messages" : "Be the first to comment"}</Text>
 
                 {Array.from(chatData.event.chat.messageQuery.messages).map((message: any, i) => 
                     <ChatMessage

@@ -105,6 +105,20 @@ DO $$
             'I can''t _wait_! Does anyone want to meet up before it starts?'
         );
 
+        -- phoebe creates an event.
+        INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration, Capacity, CreatedTimestamp)
+        VALUES (
+            'Bowling', 
+            E'Come to Spalding Bowl for some bowling on Friday!\nHere''s a link to the venue''s website: https://spaldingbowl.co.uk/ \nWe''re planning to book a few lanes, if you''re interested please put a message in the chat and I''ll add you to the Messenger group chat.\nIf you don''t know what a bowling alley is, here''s the first paragraph of the [Wikipedia page](https://en.wikipedia.org/wiki/Bowling_alley):\nA *bowling alley* (also known as a *bowling center*, *bowling lounge*, *bowling arena*, or historically *bowling club*) is a facility where the sport of [bowling](https://en.wikipedia.org/wiki/Bowling) is played. It can be a dedicated facility or part of another, such as a [clubhouse](https://en.wikipedia.org/wiki/Meetinghouse) or dwelling [house](https://en.wikipedia.org/wiki/House).', 
+            phoebesID, 
+            ST_SetSRID(ST_MakePoint(-0.14918414519461462, 52.78942766195503),4326), 
+            'Spalding Bowl',
+            '2024-2-09 18:00:00+00',
+            '02:00:00',
+            12,
+            '2024-01-12 15:45:48+00'
+        );
+
 
     END
 $$;
