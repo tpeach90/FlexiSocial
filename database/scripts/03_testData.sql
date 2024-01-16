@@ -13,6 +13,8 @@ DO $$
     DECLARE joesQuestionId integer;
     DECLARE johnsResponseId integer;
 
+    DECLARE johnsPfpImageId integer;
+
     BEGIN
 
         -- create some users.
@@ -119,6 +121,30 @@ DO $$
             '2024-01-12 15:45:48+00'
         );
 
+        -- Jeff (formerly John) Doe adds a profile picture.
+        -- this section should be run in a transaction as you need the generated id:
+        -- =================================================================
+        INSERT INTO UserImages(OriginalFilename, StoreFilename, UploadedTimestamp)
+        VALUES (
+            'my profile picture.png',
+            '61fd982aa516be8f9bfc4c92014b72c7',
+            '2024-01-16 14:48:52.430335'
+        ) RETURNING Id INTO johnsPfpImageId;
+
+        INSERT INTO ProfilePictures(UserId, UserImageId)
+        VALUES (
+            johnsId,
+            johnsPfpImageId
+        );
+        -- =================================================================
+
+        -- add a temp link to download the file. (this would be created by the graphql server when a user asks for it)
+        INSERT INTO UserImageLinks(Link, UserImageId, ExpiryTimestamp)
+        VALUES (
+            'c02e115ffe5d6438.png',
+            johnsPfpImageId,
+            '2099-01-16 14:48:52.430335' -- stupidly long time, just for testing. Default is 20 mins from now
+        );
 
     END
 $$;

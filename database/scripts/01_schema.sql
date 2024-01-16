@@ -8,7 +8,8 @@ DROP TABLE IF EXISTS Events CASCADE;
 DROP TABLE IF EXISTS ChatMessages CASCADE;
 DROP TABLE IF EXISTS UserEventRoles CASCADE;
 DROP TABLE IF EXISTS ChatReplies CASCADE;
-DROP TABLE IF EXISTS Files CASCADE;
+DROP TABLE IF EXISTS UserImages CASCADE;
+DROP TABLE IF EXISTS UserImageLinks CASCADE;
 DROP TABLE IF EXISTS ProfilePictures CASCADE;
 DROP TRIGGER IF EXISTS on_profile_picture_delete_trigger ON ProfilePictures;
 DROP FUNCTION IF EXISTS on_profile_picture_delete;
@@ -83,33 +84,44 @@ CREATE TABLE ChatReplies (
     ReplyingToId integer, -- if this is null it means that the message has been deleted.
 
     FOREIGN KEY (MessageId) REFERENCES ChatMessages(Id) ON DELETE CASCADE,
-    FOREIGN KEY (ReplyingToId) REFERENCES ChatMessages(Id) ON DELETE CASCADE
+    FOREIGN KEY (ReplyingToId) REFERENCES ChatMessages(Id) ON DELETE SET NULL
 );
 
-CREATE TABLE Files (
+CREATE TABLE UserImages (
     Id integer primary key generated always as identity,
     UploadedTimestamp timestamp NOT NULL DEFAULT current_timestamp,
-    FlaggedForDeletion boolean NOT NULL,
+    Deleted boolean NOT NULL DEFAULT FALSE,
     OriginalFilename varchar(255) NOT NULL,
-    StoreFilename char(32) UNIQUE NOT NULL
+    StoreFilename char(32) UNIQUE NOT NULL -- DEFAULT md5(random()::text)
+);
+
+-- temporary links to user images.
+CREATE TABLE UserImageLinks (
+    Link varchar(32) NOT NULL PRIMARY KEY,
+    UserImageId integer NOT NULL,
+    ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (20 * interval '1 minute'), -- expires in 20 minutes
+    -- don't allow the use of expired links, and periodically remove these entries from the database.
+
+    FOREIGN KEY (UserImageId) REFERENCES UserImages(Id) ON DELETE CASCADE
 );
 
 CREATE TABLE ProfilePictures (
     UserId integer NOT NULL,
-    FileId integer NOT NULL,
+    UserImageId integer NOT NULL,
 
     PRIMARY KEY (UserId),
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
-    FOREIGN KEY (FileId) REFERENCES Files(Id) ON DELETE CASCADE
+    FOREIGN KEY (UserImageId) REFERENCES UserImages(Id) ON DELETE CASCADE
 );
+
 
 
 -- flag the image for deletion when ProfilePictures entry is deleted.
 CREATE OR REPLACE FUNCTION on_profile_picture_delete()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE Files
-    SET FlaggedForDeletion = TRUE
+    UPDATE UserImages
+    SET Deleted = TRUE
     WHERE Id = OLD.FileId;
     RETURN OLD;
 END;
@@ -127,7 +139,7 @@ EXECUTE FUNCTION on_profile_picture_delete();
 -- CREATE OR REPLACE FUNCTION on_user_delete()
 -- RETURNS TRIGGER AS $$
 -- BEGIN
---     UPDATE Files
+--     UPDATE UserImages
 --     SET UserId = NULL
 --     WHERE UserId = OLD.Id;
 
