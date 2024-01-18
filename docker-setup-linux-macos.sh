@@ -11,6 +11,8 @@ DATABASE_IMAGE="database-flexisocial-image"
 DATABASE_CONTAINER="database-flexisocial"
 GRAPHQL_SERVER_IMAGE="graphql-server-flexisocial-image"
 GRAPHQL_SERVER_CONTAINER="graphql-server-flexisocial"
+FILE_SERVER_IMAGE="file-server-flexisocial-image"
+FILE_SERVER_CONTAINER="file-server-flexisocial"
 FLEXISOCIAL_NETWORK="flexisocial-net"
 
 
@@ -18,6 +20,7 @@ FLEXISOCIAL_NETWORK="flexisocial-net"
 ALL=1
 DATABASE=0
 GRAPHQL_SERVER=0
+FILE_SERVER=0
 FORCE=0
 i=1;
 j=$#;
@@ -32,7 +35,11 @@ do
             ALL=0
             GRAPHQL_SERVER=1
             ;;
-        -f|--force)
+        -f|--file-server)
+            ALL=0
+            FILE_SERVER=1
+            ;;
+        -F|--force)
             FORCE=1
             ;;  
         -h|--help)
@@ -40,7 +47,8 @@ do
             echo
             echo "  -d --database          (Re)create the database image and container."
             echo "  -g --graphql-server    (Re)create the GraphQL server image and container."
-            echo "  -f --force             Don't ask for confirmation before proceeding."
+            echo "  -f --file-server       (Re)create the file server image and container."
+            echo "  -F --force             Don't ask for confirmation before proceeding."
             echo "  -h --help              Display this message and exit."
             echo
             echo "If no flags specify which containers to recreate, then all will be recreated."
@@ -57,6 +65,7 @@ done
 if [[ $ALL == 1 ]]; then
     DATABASE=1
     GRAPHQL_SERVER=1
+    FILE_SERVER=1
 fi
 
 # display confirmation message
@@ -66,10 +75,12 @@ else
     echo "The following images will be deleted (if they exist) and recreated:"
     [[ $DATABASE == 1 ]] &&       echo "    $DATABASE_IMAGE"
     [[ $GRAPHQL_SERVER == 1 ]] && echo "    $GRAPHQL_SERVER_IMAGE"
+    [[ $FILE_SERVER == 1 ]] &&    echo "    $FILE_SERVER_IMAGE"
     echo
     echo "The following containers will be deleted (if they exist) and recreated:"
     [[ $DATABASE == 1 ]] &&       echo "    $DATABASE_CONTAINER"
     [[ $GRAPHQL_SERVER == 1 ]] && echo "    $GRAPHQL_SERVER_CONTAINER"
+    [[ $FILE_SERVER == 1 ]] &&    echo "    $FILE_SERVER_CONTAINER"
     echo
 
     read -p "Start? (y/n): " start
@@ -99,6 +110,11 @@ if [[ $GRAPHQL_SERVER == 1 ]] && docker ps -a --format "{{.Names}}" | grep $GRAP
     docker stop $GRAPHQL_SERVER_CONTAINER > /dev/null
     docker rm $GRAPHQL_SERVER_CONTAINER > /dev/null
 fi
+if [[ $FILE_SERVER == 1 ]] && docker ps -a --format "{{.Names}}" | grep $FILE_SERVER_CONTAINER > /dev/null ; then
+    echo "Deleting $FILE_SERVER_CONTAINER container"
+    docker stop $FILE_SERVER_CONTAINER > /dev/null
+    docker rm $FILE_SERVER_CONTAINER > /dev/null
+fi
 
 # delete images if they exist
 if [[ $DATABASE == 1 ]] && docker images --format "{{.Repository}}" | grep $DATABASE_IMAGE > /dev/null; then
@@ -106,8 +122,12 @@ if [[ $DATABASE == 1 ]] && docker images --format "{{.Repository}}" | grep $DATA
     docker image rm $DATABASE_IMAGE > /dev/null
 fi
 if [[ $GRAPHQL_SERVER == 1 ]] && docker images --format "{{.Repository}}" | grep $GRAPHQL_SERVER_IMAGE > /dev/null; then
-    echo "Deleting $GRAPHQL_SERVER_IMAGE  image"
+    echo "Deleting $GRAPHQL_SERVER_IMAGE image"
     docker image rm $GRAPHQL_SERVER_IMAGE > /dev/null
+fi
+if [[ $FILE_SERVER == 1 ]] && docker images --format "{{.Repository}}" | grep $FILE_SERVER_IMAGE > /dev/null; then
+    echo "Deleting $FILE_SERVER_IMAGE image"
+    docker image rm $FILE_SERVER_IMAGE > /dev/null
 fi
 
 # create images
@@ -118,6 +138,10 @@ fi
 if [[ $GRAPHQL_SERVER == 1 ]]; then
     echo "Creating $GRAPHQL_SERVER_IMAGE image"
     docker build -t $GRAPHQL_SERVER_IMAGE ./graphql-server/
+fi
+if [[ $FILE_SERVER == 1 ]]; then
+    echo "Creating $FILE_SERVER_IMAGE image"
+    docker build -t $FILE_SERVER_IMAGE ./file-server/
 fi
 
 # create network if not already exists
@@ -136,5 +160,9 @@ fi
 if [[ $GRAPHQL_SERVER == 1 ]]; then
     echo "Creating $GRAPHQL_SERVER_CONTAINER container"
     docker run -d -p 4000:4000 --net $FLEXISOCIAL_NETWORK --name $GRAPHQL_SERVER_CONTAINER $GRAPHQL_SERVER_IMAGE > /dev/null
+fi
+if [[ $FILE_SERVER == 1 ]]; then
+    echo "Creating $FILE_SERVER_CONTAINER container"
+    docker run -d -p 3000:3000 --net $FLEXISOCIAL_NETWORK --name $FILE_SERVER_CONTAINER $FILE_SERVER_IMAGE > /dev/null
 fi
 

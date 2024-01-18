@@ -97,7 +97,7 @@ CREATE TABLE UserImages (
 
 -- temporary links to user images.
 CREATE TABLE UserImageLinks (
-    Link varchar(32) NOT NULL PRIMARY KEY,
+    Link varchar(32) NOT NULL PRIMARY KEY DEFAULT md5(random()::text),
     UserImageId integer NOT NULL,
     ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (20 * interval '1 minute'), -- expires in 20 minutes
     -- don't allow the use of expired links, and periodically remove these entries from the database.
@@ -132,6 +132,42 @@ FOR EACH ROW
 EXECUTE FUNCTION on_profile_picture_delete();
 
 
+-- get or create a temp link.
+CREATE OR REPLACE FUNCTION get_user_image_temp_link(imgid int, cutoff timestamp DEFAULT current_timestamp)
+RETURNS varchar(32)
+AS $$
+    DECLARE LinkToReturn varchar(32);
+
+    BEGIN
+        -- -- lock the pfp image to prevent other links being made.
+        -- PERFORM null FROM UserImages
+        -- WHERE Id = imgid
+        -- FOR UPDATE;
+
+        --  check that the image actual exists
+        IF NOT EXISTS(SELECT null FROM UserImages WHERE Id=imgid) THEN
+            RETURN NULL;
+        END IF;
+
+        LinkToReturn := null;
+        SELECT Link
+        INTO LinkToReturn
+        FROM UserImageLinks
+        WHERE UserImageId = imgid
+        AND ExpiryTimestamp > cutoff
+        ORDER BY ExpiryTimestamp DESC
+        LIMIT 1;
+        
+        IF LinkToReturn IS NULL THEN
+            -- create new link.
+        	INSERT INTO UserImageLinks (UserImageId)
+                VALUES (imgid)
+                RETURNING Link INTO LinkToReturn;
+        END IF;
+
+	RETURN LinkToReturn;
+    END
+$$ LANGUAGE plpgsql;
 
 
 -- -- adapted from chatgpt.

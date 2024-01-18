@@ -789,7 +789,155 @@ export async function getSensitiveUserInfo(userId:number) {
         id: userId
     }
 
-    
+
+}
+
+// number of milliseconds before the expiry timestamp that we create a new link
+const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
+
+// export async function getUserPfpUrlPath(userId: number) {
+
+//     // get the temp link with the furthest expiry timestamp (if it exists).
+//     const query = `
+//         SELECT
+//             ProfilePictures.UserImageId,
+//             Link,
+//             ExpiryTimestamp,
+//             current_timestamp
+//         FROM ProfilePictures 
+//         LEFT JOIN UserImageLinks
+//         ON ProfilePictures.UserImageId = UserImageLinks.UserImageId
+//         WHERE UserId = $1
+//         ORDER BY ExpiryTimestamp DESC
+//         LIMIT 1
+//     `
+//     const result = await connection.query(query, {params: [userId]});
+
+//     if (!result.rows) {
+//         console.error("Error for query: \n" + query)
+//         throw new GraphQLError("Internal server error")
+//     } 
+
+//     // 0 results - no user/no pfp
+//     if (result.rows.length == 0) return null;
+
+//     // unpack result
+//     const [
+//         UserImageId,
+//         Link,
+//         ExpiryTimestamp,
+//         current_timestamp
+//     ] : [number, string, number, number] | [number, null, null, number] = result.rows[0];
+
+//     // 1 result, but everything except current_timestamp is null - link needs to be created
+//     // OR result not null, but close to expiring - link needs to be created.
+//     if (!Link || ExpiryTimestamp + makeNewLinkTimeBuffer > current_timestamp) {
+
+//         // check that another thread has not created a new link since we queried for it, and if not, create it.
+//         const update = `
+
+//         DO $$
+
+//             DECLARE LinkToReturn varchar(32);
+
+//             BEGIN
+
+//                 -- lock the pfp image to prevent other links being made.
+//                 SELECT null FROM UserImages
+//                 WHERE Id = $1
+//                 FOR UPDATE;
+
+//                 LinkToReturn := null;
+
+//                 -- check that a new link (with a later expiration timestamp) has not been added since our previous query
+//                 SELECT Link
+//                 INTO LinkToReturn
+//                 FROM UserImageLinks
+//                 WHERE UserImageId = $1
+//                 AND ExpiryTimestamp > current_timestamp
+//                 ${ExpiryTimestamp ? "AND ExpiryTimestamp > $2" : ""}
+//                 ORDER BY ExpiryTimestamp DESC
+//                 LIMIT 1;
+
+//                 -- if no results then create a new link
+//                 CASE 
+//                     WHEN LinkToReturn = null
+//                     THEN
+//                         (INSERT INTO UserImageLinks (UserImageId)
+//                         VALUES ($1)
+//                         RETURNING Link INTO LinkToReturn)
+//                 END;
+
+//             SELECT LinkToReturn;
+
+//             END
+
+//         $$;
+
+//         `
+//     }
+
+//     // 1 result, not null, not expired - return link.
+// }
+
+
+export async function getUserPfpUrlPath(userId: number) {
+
+    // gets a link (or creates it if it doesn't exist)
+    const query = `
+        SELECT 
+            get_user_image_temp_link(
+                UserImageId, 
+                (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
+            ) 
+        FROM ProfilePictures
+        WHERE UserId=$2;
+    `
+
+    const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userId]});
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    if (result.rows.length != 1) {
+        // user does not exist, or does not have a pfp
+        return null;
+    }
+
+    const [link] : [string | null] = result.rows[0];
+
+    return link;
+
+}
+
+export async function getUserPfpUrlPaths(userIds: readonly number[]) {
+
+    const query = `
+        SELECT 
+            UserId,
+            get_user_image_temp_link(
+                UserImageId, 
+                (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
+            ) 
+        FROM ProfilePictures
+        WHERE UserId = ANY($2);
+    `
+
+    const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userIds] });
+
+    if (!result.rows) {
+        console.error("Error for query: \n" + query)
+        throw new GraphQLError("Internal server error")
+    }
+
+    const userId2Link = new Map(result.rows.map((row) =>
+        [row[0] as number, row[1] as string | null]
+    ));
+
+    return userIds.map((id) => userId2Link.get(id) ?? null)
+
 
 
 }

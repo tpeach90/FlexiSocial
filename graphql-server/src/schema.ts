@@ -6,7 +6,7 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, queryChatMessages } from './sql/queries';
+import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, getUserPfpUrlPath, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
 import { createUser } from './sql/updates';
@@ -14,7 +14,7 @@ import { createUser } from './sql/updates';
 // [] means list
 //  ! means non-nullable
 
-const typeDefs = readFileSync("typeDefs.graphql", 'utf8')
+const typeDefs = readFileSync("src/typeDefs.graphql", 'utf8')
 
 export const schema = createSchema<GraphQLContext>({
     typeDefs: [TimestampTypeDefinition, typeDefs].join("\n"),
@@ -82,7 +82,10 @@ export const schema = createSchema<GraphQLContext>({
             stats: ({id}, {}, context) => ({id}),
             
             roleInEvent: ({id}, {eventId}, {userEventRoleLoader}) =>
-                userEventRoleLoader.load({eventId, userId: id})
+                userEventRoleLoader.load({eventId, userId: id}),
+
+            profilePicture: ({ id }, { }, { userProfilePictureLoader })  => 
+                userProfilePictureLoader.load(id),
             
         },
 

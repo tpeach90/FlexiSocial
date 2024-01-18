@@ -59,6 +59,7 @@ type User {
     stats: UserStats!
     registerTimestamp: Timestamp!
     roleInEvent(eventId: Int!): UserEventRole
+    profilePicture: String
 }
 
 type UserStats {
