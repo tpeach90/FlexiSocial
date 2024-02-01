@@ -21,10 +21,7 @@ type EventsInBBoxQueryResult {
     events: [Event!]!
 }
 
-type Mutation {
-    signup(email: String!, password: String!, displayName: String!): AuthPayload
-    login(email: String!, password: String!): AuthPayload
-}
+
 
 
 scalar Interval
@@ -128,6 +125,25 @@ type ChatMessage {
     reply: ChatMessage
 }
 
+
+
+
+
+
+
+
+
+type Mutation {
+    signup(email: String!, password: String!, displayName: String!): AuthPayload
+    login(email: String!, password: String!): AuthPayload
+    uploadPfp: UploadPfpPayload!   
+}
+
 type AuthPayload {
   token: String
+}
+
+type UploadPfpPayload {
+    link:String!
+    expiryTimestamp: Timestamp!
 }

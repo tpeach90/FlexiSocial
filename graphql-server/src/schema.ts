@@ -9,7 +9,7 @@ import { GraphQLError } from 'graphql';
 import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, getUserPfpUrlPath, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
-import { createUser } from './sql/updates';
+import { createProfilePictureUploadLink, createUser } from './sql/updates';
 
 // [] means list
 //  ! means non-nullable
@@ -136,12 +136,11 @@ export const schema = createSchema<GraphQLContext>({
         Mutation: {
 
             signup: async (_, { email, password, displayName }, {}) => {
-                // @todo check that the inputs are valid
-
                 // encrypt the user's password with random salt.
                 const hashedPassword = await hash(password, 10)
                 
                 // add to database
+                // this function also checks for valid email format.
                 const uuid = await createUser(displayName, email, hashedPassword);          
 
                 // create signed token to give to the user
@@ -163,6 +162,18 @@ export const schema = createSchema<GraphQLContext>({
                 const token = sign({uuid}, APP_SECRET);
 
                 return {token};
+            },
+
+            uploadPfp: async (_, {}, {currentUserId}) => {
+
+                if (!currentUserId) throw new GraphQLError("Not authorized")
+
+                // TODO create a temporary upload link.
+                const {link, expiryTimestamp} = await createProfilePictureUploadLink(currentUserId);
+
+                return {link, expiryTimestamp}
+                
+
             }
         },
 

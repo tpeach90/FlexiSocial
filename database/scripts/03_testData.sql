@@ -19,19 +19,46 @@ DO $$
 
         -- create some users.
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('Jeff Doe', 'moderator', 'john.doe@hotmail.com', 'pretendthisisahashedpassword', E'Hi, I''m Jeff, I like to go to more casual events, like the ones one my website:\nhttps://www.taylorswift.com/\n\nInstagram: [@taylorswift](https://www.instagram.com/taylorswift/)\nTwitter: [@taylorswift13](https://twitter.com/taylorswift13)', '2023-6-16 17:51:23')
+        VALUES (
+            'Jeff Doe', 
+            'moderator', 
+            'john.doe@hotmail.com', 
+            '$2a$10$WJbaHUiqn5v4OE5EkI.vjOqKOUTl24lPA7/n6C7gtxgOdVz3TTSqy', -- thisisahashedpassword
+            E'Hi, I''m Jeff, I like to go to more casual events, like the ones one my website:\nhttps://www.taylorswift.com/\n\nInstagram: [@taylorswift](https://www.instagram.com/taylorswift/)\nTwitter: [@taylorswift13](https://twitter.com/taylorswift13)', 
+            '2023-6-16 17:51:23'
+        )
         RETURNING Id INTO johnsId;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('Joe Bloggs', 'standard', 'joe.bloggs@gmail.com', 'Joebloggs123!', E'We **won''t** get along unless you''ve seen _Star Wars_. If not, looking at the plot summary on Wikipedia is good enough. *May the force be with you!*\n\nSnapchat: [joedoesnotbloggs8](https://www.snapchat.com/add/joedoesnotbloggs8)', '2023-12-21 06:15:18')
+        VALUES (
+            'Joe Bloggs', 
+            'standard', 
+            'joe.bloggs@gmail.com', 
+            '$2a$10$b7JO5C75njndZENUPZkr6.ZTleuplP2ieyPYrDXug/mCrngEOcg/C', --Joebloggs123!
+            E'We **won''t** get along unless you''ve seen _Star Wars_. If not, looking at the plot summary on Wikipedia is good enough. *May the force be with you!*\n\nSnapchat: [joedoesnotbloggs8](https://www.snapchat.com/add/joedoesnotbloggs8)', 
+            '2023-12-21 06:15:18'
+            )
         RETURNING Id INTO joesId;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, Bio, RegisterTimestamp)
-        VALUES ('Phoebe Pace', 'standard', 'phoebepace@btinternet.com', 'Phoebeftw!', 'I do a good isopod impression 💯', '2021-12-21 06:15:18')
+        VALUES (
+            'Phoebe Pace', 
+            'standard', 
+            'phoebepace@btinternet.com', 
+            '$2a$10$zFhmtVtI8SgX0xFNLl2uv.rSTLr84x68CfaI0QJdazoN3Xa7ZAOCO',  --Phoebeftw!
+            'I do a good isopod impression 💯', 
+            '2021-12-21 06:15:18'
+        )
         RETURNING Id INTO phoebesID;
 
         INSERT INTO Users(DisplayName, Role, Email, HashedPassword, RegisterTimestamp)
-        VALUES ('Jamir Ochoa', 'standard', 'jamirwochoa@whitehouse.gov', 'password', '2004-04-02 06:15:18')
+        VALUES (
+            'Jamir Ochoa', 
+            'standard', 
+            'jamirwochoa@whitehouse.gov', 
+            '$2a$10$cl6GwDby5PoMOu2Vk6moqegKK8IkjVGzQpz6PPuFuTyOrqKHS8Fkm', -- password
+            '2004-04-02 06:15:18'
+        )
         RETURNING Id INTO jamirsId;
 
         -- John Doe creates an event
@@ -124,14 +151,13 @@ DO $$
         -- Jeff (formerly John) Doe adds a profile picture.
         -- this section should be run in a transaction as you need the generated id:
         -- =================================================================
-        INSERT INTO UserImages(OriginalFilename, StoreFilename, UploadedTimestamp)
+        INSERT INTO ProfilePictureImages(StoreFilename, UploadedTimestamp)
         VALUES (
-            'my profile picture.png',
             '61fd982aa516be8f9bfc4c92014b72c7',
             '2024-01-16 14:48:52.430335'
         ) RETURNING Id INTO johnsPfpImageId;
 
-        INSERT INTO ProfilePictures(UserId, UserImageId)
+        INSERT INTO ProfilePictures(UserId, ProfilePictureImageId)
         VALUES (
             johnsId,
             johnsPfpImageId
@@ -139,7 +165,7 @@ DO $$
         -- =================================================================
 
         -- add a temp link to download the file. (this would be created by the graphql server when a user asks for it)
-        INSERT INTO UserImageLinks(Link, UserImageId, ExpiryTimestamp)
+        INSERT INTO UserImageLinks(Link, ProfilePictureImageId, ExpiryTimestamp)
         VALUES (
             'c02e115ffe5d6438.png',
             johnsPfpImageId,

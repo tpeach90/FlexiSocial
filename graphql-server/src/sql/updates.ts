@@ -55,3 +55,25 @@ export async function createUser(displayName:string, email:string, hashedPasswor
 
     return uuid;
 }
+
+
+export async function createProfilePictureUploadLink(userId: number) {
+    // assume that the user exists. If they don't then the database update will error due to foreign key constraints.
+
+    const update = `
+        INSERT INTO ProfilePictureUploadLinks (UserId)
+        VALUES ($1)
+        RETURNING Link, ExpiryTimestamp
+    `;
+
+    const result = await connection.query(update, { params: [userId] })
+
+    if (!result.rows || result.rows.length != 1) {
+        console.error("Error for update: \n" + update)
+        throw new Error("Internal server error")
+    }
+
+    const [Link, ExpiryTimestamp]: [string, number] = result.rows[0];
+
+    return {link: Link, expiryTimestamp: ExpiryTimestamp}
+}

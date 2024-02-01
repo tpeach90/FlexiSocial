@@ -1,12 +1,14 @@
 
 import fs from "fs";
 import path from "path";
-import { connection } from "./connection";
+// import { connection } from "./connection";
 import {app} from "./routes";
 import {STORE, port} from "./config"
 
 
 async function start() {
+
+    console.log("The store is set to location " + path.resolve(STORE))
 
     // check if the store exists.
     try{
@@ -31,14 +33,14 @@ async function start() {
     }
 
 
-    // connect to database
-    try {
-        await connection.connect();
-    } catch (e) {
-        console.error("Failed to get database connection. Is the database running, and have credentials been supplied to this server in environment variables?")
-        throw e;
-    }
-    console.log("Got database connection");
+    // // connect to database
+    // try {
+    //     await connection.connect();
+    // } catch (e) {
+    //     console.error("Failed to get database connection. Is the database running, and have credentials been supplied to this server in environment variables?")
+    //     throw e;
+    // }
+    // console.log("Got database connection");
 
 
     // start server

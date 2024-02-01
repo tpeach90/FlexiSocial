@@ -3,5 +3,4 @@ node_modules/
 
 .env
 
-store/*
-!store/61fd982aa516be8f9bfc4c92014b.png
+store

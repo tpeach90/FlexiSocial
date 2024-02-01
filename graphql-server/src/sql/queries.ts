@@ -800,13 +800,13 @@ const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
 //     // get the temp link with the furthest expiry timestamp (if it exists).
 //     const query = `
 //         SELECT
-//             ProfilePictures.UserImageId,
+//             ProfilePictures.ProfilePictureImageId,
 //             Link,
 //             ExpiryTimestamp,
 //             current_timestamp
 //         FROM ProfilePictures 
 //         LEFT JOIN UserImageLinks
-//         ON ProfilePictures.UserImageId = UserImageLinks.UserImageId
+//         ON ProfilePictures.ProfilePictureImageId = UserImageLinks.ProfilePictureImageId
 //         WHERE UserId = $1
 //         ORDER BY ExpiryTimestamp DESC
 //         LIMIT 1
@@ -823,7 +823,7 @@ const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
 
 //     // unpack result
 //     const [
-//         UserImageId,
+//         ProfilePictureImageId,
 //         Link,
 //         ExpiryTimestamp,
 //         current_timestamp
@@ -853,7 +853,7 @@ const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
 //                 SELECT Link
 //                 INTO LinkToReturn
 //                 FROM UserImageLinks
-//                 WHERE UserImageId = $1
+//                 WHERE ProfilePictureImageId = $1
 //                 AND ExpiryTimestamp > current_timestamp
 //                 ${ExpiryTimestamp ? "AND ExpiryTimestamp > $2" : ""}
 //                 ORDER BY ExpiryTimestamp DESC
@@ -863,7 +863,7 @@ const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
 //                 CASE 
 //                     WHEN LinkToReturn = null
 //                     THEN
-//                         (INSERT INTO UserImageLinks (UserImageId)
+//                         (INSERT INTO UserImageLinks (ProfilePictureImageId)
 //                         VALUES ($1)
 //                         RETURNING Link INTO LinkToReturn)
 //                 END;
@@ -887,7 +887,7 @@ export async function getUserPfpUrlPath(userId: number) {
     const query = `
         SELECT 
             get_user_image_temp_link(
-                UserImageId, 
+                ProfilePictureImageId,
                 (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
             ) 
         FROM ProfilePictures
@@ -918,7 +918,7 @@ export async function getUserPfpUrlPaths(userIds: readonly number[]) {
         SELECT 
             UserId,
             get_user_image_temp_link(
-                UserImageId, 
+                ProfilePictureImageId,
                 (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
             ) 
         FROM ProfilePictures

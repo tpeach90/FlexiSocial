@@ -1,5 +1,23 @@
-import { Connection } from 'postgresql-client';
+import { NextFunction } from 'express'
+import { Pool, Client, PoolClient } from 'pg'
 
-// must specify the database using environment variaibles.
+// pools will use environment variables
+// for connection information
+export const pool = new Pool()
 
-export const connection = new Connection();
+// wrapper to connect/release client 
+export async function withClient(next: NextFunction, callback: (client: PoolClient) => any) {
+    try {
+        const client = await pool.connect();
+        try {
+            await callback(client);
+        } catch (e) {
+            throw e;
+        } finally {
+            client.release();
+        }
+    } catch (e) {
+        console.log(e)
+        next()
+    }
+}

@@ -8,9 +8,10 @@ DROP TABLE IF EXISTS Events CASCADE;
 DROP TABLE IF EXISTS ChatMessages CASCADE;
 DROP TABLE IF EXISTS UserEventRoles CASCADE;
 DROP TABLE IF EXISTS ChatReplies CASCADE;
-DROP TABLE IF EXISTS UserImages CASCADE;
+DROP TABLE IF EXISTS ProfilePictureImages CASCADE;
 DROP TABLE IF EXISTS UserImageLinks CASCADE;
 DROP TABLE IF EXISTS ProfilePictures CASCADE;
+DROP TABLE IF EXISTS ProfilePictureUploadLinks CASCADE;
 DROP TRIGGER IF EXISTS on_profile_picture_delete_trigger ON ProfilePictures;
 DROP FUNCTION IF EXISTS on_profile_picture_delete;
 DROP TYPE IF EXISTS USER_ROLE;
@@ -87,31 +88,45 @@ CREATE TABLE ChatReplies (
     FOREIGN KEY (ReplyingToId) REFERENCES ChatMessages(Id) ON DELETE SET NULL
 );
 
-CREATE TABLE UserImages (
+
+
+
+CREATE TABLE ProfilePictureImages (
     Id integer primary key generated always as identity,
     UploadedTimestamp timestamp NOT NULL DEFAULT current_timestamp,
     Deleted boolean NOT NULL DEFAULT FALSE,
-    OriginalFilename varchar(255) NOT NULL,
+    -- OriginalFilename varchar(255) NOT NULL,
     StoreFilename char(32) UNIQUE NOT NULL -- DEFAULT md5(random()::text)
 );
 
 -- temporary links to user images.
+-- todo what is the point of this???? remove it later probablt.
 CREATE TABLE UserImageLinks (
     Link varchar(32) NOT NULL PRIMARY KEY DEFAULT md5(random()::text),
-    UserImageId integer NOT NULL,
+    ProfilePictureImageId integer NOT NULL,
     ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (20 * interval '1 minute'), -- expires in 20 minutes
     -- don't allow the use of expired links, and periodically remove these entries from the database.
 
-    FOREIGN KEY (UserImageId) REFERENCES UserImages(Id) ON DELETE CASCADE
+    FOREIGN KEY (ProfilePictureImageId) REFERENCES ProfilePictureImages(Id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE ProfilePictureUploadLinks (
+    Link varchar(32) NOT NULL PRIMARY KEY DEFAULT md5(random()::text),
+    ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (1 * interval '1 minute'), -- 1 minute to start upload
+    -- don't allow the use of expired links, and periodically remove these entries from the database.
+    UserId integer NOT NULL,
+
+    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
 );
 
 CREATE TABLE ProfilePictures (
     UserId integer NOT NULL,
-    UserImageId integer NOT NULL,
+    ProfilePictureImageId integer NOT NULL,
 
     PRIMARY KEY (UserId),
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
-    FOREIGN KEY (UserImageId) REFERENCES UserImages(Id) ON DELETE CASCADE
+    FOREIGN KEY (ProfilePictureImageId) REFERENCES ProfilePictureImages(Id) ON DELETE CASCADE
 );
 
 
@@ -120,9 +135,9 @@ CREATE TABLE ProfilePictures (
 CREATE OR REPLACE FUNCTION on_profile_picture_delete()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE UserImages
+    UPDATE ProfilePictureImages
     SET Deleted = TRUE
-    WHERE Id = OLD.FileId;
+    WHERE Id = OLD.ProfilePictureImageId;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -140,12 +155,12 @@ AS $$
 
     BEGIN
         -- -- lock the pfp image to prevent other links being made.
-        -- PERFORM null FROM UserImages
+        -- PERFORM null FROM ProfilePictureImages
         -- WHERE Id = imgid
         -- FOR UPDATE;
 
         --  check that the image actual exists
-        IF NOT EXISTS(SELECT null FROM UserImages WHERE Id=imgid) THEN
+        IF NOT EXISTS(SELECT null FROM ProfilePictureImages WHERE Id=imgid) THEN
             RETURN NULL;
         END IF;
 
@@ -153,14 +168,14 @@ AS $$
         SELECT Link
         INTO LinkToReturn
         FROM UserImageLinks
-        WHERE UserImageId = imgid
+        WHERE ProfilePictureImageId = imgid
         AND ExpiryTimestamp > cutoff
         ORDER BY ExpiryTimestamp DESC
         LIMIT 1;
         
         IF LinkToReturn IS NULL THEN
             -- create new link.
-        	INSERT INTO UserImageLinks (UserImageId)
+        	INSERT INTO UserImageLinks (ProfilePictureImageId)
                 VALUES (imgid)
                 RETURNING Link INTO LinkToReturn;
         END IF;
@@ -175,7 +190,7 @@ $$ LANGUAGE plpgsql;
 -- CREATE OR REPLACE FUNCTION on_user_delete()
 -- RETURNS TRIGGER AS $$
 -- BEGIN
---     UPDATE UserImages
+--     UPDATE ProfilePictureImages
 --     SET UserId = NULL
 --     WHERE UserId = OLD.Id;
 
