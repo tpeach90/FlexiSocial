@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import { connection } from "../connection";
+// import { connection } from "../connection";
 import { GraphQLContext } from "../context";
 
 import {Event as EventObj, User, UserEventRole} from "../types"
@@ -7,6 +7,7 @@ import { tileToBBox } from "../tiles";
 import _, { zip } from "underscore";
 import { compare } from "bcryptjs";
 import { assert } from "console";
+import { PoolClient } from "pg";
 
 
 /**
@@ -31,7 +32,7 @@ export async function eventsInBoundingBox(
     return [];
 }
 
-export async function getEvent(id: bigint) {
+export async function getEvent(client: PoolClient, id: bigint) {
 
     const query = `
         SELECT 
@@ -49,7 +50,7 @@ export async function getEvent(id: bigint) {
         WHERE id=$1
     `
 
-    const result = await connection.query(query, {params: [id]});
+    const result = await client.query({rowMode: "array", text:query}, [id]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -78,7 +79,7 @@ export async function getEvent(id: bigint) {
 }
 
 
-export async function getEvents(ids: readonly number[]) {
+export async function getEvents(client: PoolClient, ids: readonly number[]) {
     const query = `
         SELECT
             Id, 
@@ -96,7 +97,7 @@ export async function getEvents(ids: readonly number[]) {
         WHERE id=ANY($1)
     `
 
-    const result = await connection.query(query, { params: [ids] });
+    const result = await client.query({ rowMode: "array", text: query }, [ids]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -131,14 +132,14 @@ export async function getEvents(ids: readonly number[]) {
  * @param eventId
  * @returns 
  */
-export async function getChatMessageCount(eventId: bigint): Promise<bigint | null> {
+export async function getChatMessageCount(client: PoolClient, eventId: bigint): Promise<bigint | null> {
     const query = `
         SELECT COUNT(*)
         FROM ChatMessages
         WHERE eventId=$1  
     `
 
-    const result = await connection.query(query, { params: [eventId] });
+    const result = await client.query({ rowMode: "array", text: query }, [eventId]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -152,7 +153,7 @@ export async function getChatMessageCount(eventId: bigint): Promise<bigint | nul
     return result.rows[0][0];
 }
 
-export async function queryChatMessages(options: {
+export async function queryChatMessages(client: PoolClient, options: {
     eventId: number, 
     first?: number,
     last?: number,
@@ -266,7 +267,7 @@ export async function queryChatMessages(options: {
     // so remove the first `undefined` index and shift everything backwards by 1
     values = values.slice(1)
 
-    const result = await connection.query(query, { params: values });
+    const result = await client.query({ rowMode: "array", text: query }, values);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -291,7 +292,7 @@ export async function queryChatMessages(options: {
 
 }
 
-export async function getChatMessage(id: number) {
+export async function getChatMessage(client: PoolClient, id: number) {
 
     const query = `
         SELECT
@@ -306,7 +307,7 @@ export async function getChatMessage(id: number) {
         WHERE Id=$1
     `
 
-    const result = await connection.query(query, { params: [id] });
+    const result = await client.query({ rowMode: "array", text: query }, [id]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -329,7 +330,7 @@ export async function getChatMessage(id: number) {
 
 }
 
-export async function getChatMessages(ids: readonly number[]) {
+export async function getChatMessages(client: PoolClient, ids: readonly number[]) {
     const query = `
         SELECT
             Id,
@@ -344,7 +345,7 @@ export async function getChatMessages(ids: readonly number[]) {
         WHERE Id=ANY($1)
     `
 
-    const result = await connection.query(query, { params: [ids] });
+    const result = await client.query({ rowMode: "array", text: query }, [ids]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -368,7 +369,7 @@ export async function getChatMessages(ids: readonly number[]) {
 }
 
 
-export async function getUser(id: number, context: GraphQLContext) {
+export async function getUser(client: PoolClient, id: number) {
 
 
     const query = `
@@ -381,7 +382,7 @@ export async function getUser(id: number, context: GraphQLContext) {
         WHERE id=$1
     `
 
-    const result = await connection.query(query, { params: [id] });
+    const result = await client.query({ rowMode: "array", text: query }, [id]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -403,7 +404,7 @@ export async function getUser(id: number, context: GraphQLContext) {
     };
 }
 
-export async function getUsers(ids: readonly number[]) {
+export async function getUsers(client: PoolClient, ids: readonly number[]) {
     const query = `
         SELECT
             Id,
@@ -414,7 +415,7 @@ export async function getUsers(ids: readonly number[]) {
         FROM Users
         WHERE id=ANY($1)
     `
-    const result = await connection.query(query, { params: [ids] });
+    const result = await client.query({ rowMode: "array", text: query }, [ids]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -445,7 +446,7 @@ export async function getUsers(ids: readonly number[]) {
  * @todo Maybe this should return null if the event doesn't exist rather than 0 for everything.
  * @returns 
  */
-export async function getEventStats(id: number) {
+export async function getEventStats(client: PoolClient, id: number) {
     
     const query = `
         SELECT 
@@ -455,7 +456,7 @@ export async function getEventStats(id: number) {
         WHERE eventId=$1
         GROUP BY Role
     `
-    const result = await connection.query(query, { params: [id] });
+    const result = await client.query({ rowMode: "array", text: query }, [id]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -482,7 +483,7 @@ export async function getEventStats(id: number) {
 }
 
 
-export async function getEventIdsOrganizedByUser(userId: number) {
+export async function getEventIdsOrganizedByUser(client: PoolClient, userId: number) {
     
     const query = `
         SELECT eventId
@@ -490,7 +491,7 @@ export async function getEventIdsOrganizedByUser(userId: number) {
         WHERE userid=$1
         AND role='organizer'
     `
-    const result = await connection.query(query, { params: [userId] });
+    const result = await client.query({ rowMode: "array", text: query }, [userId]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -500,7 +501,7 @@ export async function getEventIdsOrganizedByUser(userId: number) {
     return result.rows.map((row) => row[0]);
 }
 
-export async function getNumEventsOrganizedByUser(userId: number) : Promise<number> {
+export async function getNumEventsOrganizedByUser(client: PoolClient, userId: number) : Promise<number> {
 
     const query = `
         SELECT count(*)
@@ -508,8 +509,7 @@ export async function getNumEventsOrganizedByUser(userId: number) : Promise<numb
         WHERE userid=$1
         AND role='organizer'
     `
-
-    const result = await connection.query(query, { params: [userId] });
+    const result = await client.query({ rowMode: "array", text: query }, [userId]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -519,7 +519,7 @@ export async function getNumEventsOrganizedByUser(userId: number) : Promise<numb
     return result.rows[0][0]
 }
 
-export async function getEventIdsInTile(tile: number, range?: { earliest?: Date, latest?: Date }) {
+export async function getEventIdsInTile(client: PoolClient, tile: number, range?: { earliest?: Date, latest?: Date }) {
 
     const {west, south, east, north} = tileToBBox(tile);
 
@@ -569,7 +569,7 @@ export async function getEventIdsInTile(tile: number, range?: { earliest?: Date,
 
     params = params.slice(1);
 
-    const result = await connection.query(query, { params });
+    const result = await client.query({ rowMode: "array", text: query }, params);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -581,13 +581,13 @@ export async function getEventIdsInTile(tile: number, range?: { earliest?: Date,
 
 }
 
-export async function getEventIdsInTiles(tiles: number[], range?: {earliest?: Date, latest?: Date}) {
+export async function getEventIdsInTiles(client: PoolClient, tiles: number[], range?: {earliest?: Date, latest?: Date}) {
 
     if (tiles.length == 0) return [];
 
     // make multiple queries for now
 
-    const eventIdsPromises = tiles.map(tile => getEventIdsInTile(tile, range));
+    const eventIdsPromises = tiles.map(tile => getEventIdsInTile(client, tile, range));
 
     // wait for all queries to complete, and combine results
     const eventIds = (await Promise.all(eventIdsPromises)).flat();
@@ -600,7 +600,7 @@ export async function getEventIdsInTiles(tiles: number[], range?: {earliest?: Da
  * @param eventId 
  * @returns map of userId to role. Users with "none" role will not appear in the result.
  */
-export async function getUserRolesInEvent(userIds: number[], eventId: number) {
+export async function getUserRolesInEvent(client: PoolClient, userIds: number[], eventId: number) {
 
     console.log(userIds, eventId);
 
@@ -611,7 +611,7 @@ export async function getUserRolesInEvent(userIds: number[], eventId: number) {
         AND UserId=ANY($2)
     `
 
-    const result = await connection.query(query, { params: [eventId, userIds] });
+    const result = await client.query({ rowMode: "array", text: query }, [eventId, userIds]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -621,7 +621,7 @@ export async function getUserRolesInEvent(userIds: number[], eventId: number) {
     return new Map<number, UserEventRole>(result.rows.map(([userId, roleBuf]) => [userId, roleBuf.toString()]));
 }
 
-export async function getUserEventRoles(userEvents: readonly {userId: number, eventId: number}[]) {
+export async function getUserEventRoles(client: PoolClient, userEvents: readonly {userId: number, eventId: number}[]) {
     
     // group by event id - make a map
     let eventToUsers = new Map<number, number[]>();
@@ -634,7 +634,7 @@ export async function getUserEventRoles(userEvents: readonly {userId: number, ev
 
     // make queries to the database
     const results = await Promise.all(eventToUsersArray.map(([eventId, userIds]) => 
-        getUserRolesInEvent(userIds, eventId)
+        getUserRolesInEvent(client, userIds, eventId)
     ));
 
     // combine results to make nested map
@@ -654,7 +654,7 @@ export async function getUserEventRoles(userEvents: readonly {userId: number, ev
  * @param password 
  * @returns null if incorrect credentials. Otherwise returns the uuid.
  */
-export async function checkEmailAndPassword(email: string, password: string) {
+export async function checkEmailAndPassword(client: PoolClient, email: string, password: string) {
 
     const query = `
         SELECT
@@ -663,8 +663,7 @@ export async function checkEmailAndPassword(email: string, password: string) {
         FROM Users
         WHERE Email = $1
     `
-
-    const result = await connection.query(query, { params: [email] });
+    const result = await client.query({ rowMode: "array", text: query }, [email]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -693,7 +692,7 @@ export async function checkEmailAndPassword(email: string, password: string) {
     return uuid;
 }
 
-export async function userUuidToUserId(uuid:string) {
+export async function userUuidToUserId(client: PoolClient, uuid:string) {
 
     const query = `
         SELECT id
@@ -701,8 +700,7 @@ export async function userUuidToUserId(uuid:string) {
         WHERE Uuid = $1
     `
 
-    const result = await connection.query(query, { params: [uuid] });
-
+    const result = await client.query({ rowMode: "array", text: query }, [uuid]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -719,7 +717,7 @@ export async function userUuidToUserId(uuid:string) {
 
 }
 
-export async function accountWithEmailExists(email:string): Promise<boolean>{
+export async function accountWithEmailExists(client: PoolClient, email:string): Promise<boolean>{
 
     const query = `
         SELECT Count(*)
@@ -727,7 +725,7 @@ export async function accountWithEmailExists(email:string): Promise<boolean>{
         WHERE Email = $1
     `
 
-    const result = await connection.query(query, { params: [email] });
+    const result = await client.query({ rowMode: "array", text: query }, [email]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -738,7 +736,7 @@ export async function accountWithEmailExists(email:string): Promise<boolean>{
 
 }
 
-export async function getSensitiveUserInfo(userId:number) {
+export async function getSensitiveUserInfo(client: PoolClient, userId:number) {
 
     const query = `
         SELECT Email
@@ -746,7 +744,7 @@ export async function getSensitiveUserInfo(userId:number) {
         WHERE Id = $1
     `
 
-    const result = await connection.query(query, { params: [userId] });
+    const result = await client.query({ rowMode: "array", text: query }, [userId]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -881,20 +879,77 @@ const makeNewLinkTimeBuffer = 10 * 1000; // milliseconds
 // }
 
 
-export async function getUserPfpUrlPath(userId: number) {
+// export async function getUserPfpUrlPath(userId: number) {
 
-    // gets a link (or creates it if it doesn't exist)
+//     // gets a link (or creates it if it doesn't exist)
+//     const query = `
+//         SELECT 
+//             get_user_image_temp_link(
+//                 ProfilePictureImageId,
+//                 (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
+//             ) 
+//         FROM ProfilePictures
+//         WHERE UserId=$2;
+//     `
+
+//     const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userId]});
+
+//     if (!result.rows) {
+//         console.error("Error for query: \n" + query)
+//         throw new GraphQLError("Internal server error")
+//     }
+
+//     if (result.rows.length != 1) {
+//         // user does not exist, or does not have a pfp
+//         return null;
+//     }
+
+//     const [link] : [string | null] = result.rows[0];
+
+//     return link;
+
+// }
+
+// export async function getUserPfpUrlPaths(userIds: readonly number[]) {
+
+//     const query = `
+//         SELECT 
+//             UserId,
+//             get_user_image_temp_link(
+//                 ProfilePictureImageId,
+//                 (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
+//             ) 
+//         FROM ProfilePictures
+//         WHERE UserId = ANY($2);
+//     `
+
+//     const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userIds] });
+
+//     if (!result.rows) {
+//         console.error("Error for query: \n" + query)
+//         throw new GraphQLError("Internal server error")
+//     }
+
+//     const userId2Link = new Map(result.rows.map((row) =>
+//         [row[0] as number, row[1] as string | null]
+//     ));
+
+//     return userIds.map((id) => userId2Link.get(id) ?? null)
+
+
+
+// }
+
+export async function getPfpStoreFilename(client: PoolClient, userId:number) {
+
     const query = `
-        SELECT 
-            get_user_image_temp_link(
-                ProfilePictureImageId,
-                (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
-            ) 
-        FROM ProfilePictures
-        WHERE UserId=$2;
+        SELECT StoreFilename
+        FROM ProfilePictureImages
+        JOIN ProfilePictures ON ProfilePictureImages.Id = ProfilePictures.ProfilePictureImageId
+        WHERE UserId = $1;
     `
 
-    const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userId]});
+    const result = await client.query({ rowMode: "array", text: query }, [userId]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
@@ -902,42 +957,35 @@ export async function getUserPfpUrlPath(userId: number) {
     }
 
     if (result.rows.length != 1) {
-        // user does not exist, or does not have a pfp
         return null;
     }
-
-    const [link] : [string | null] = result.rows[0];
-
-    return link;
-
+    const StoreFilename : string = result.rows[0][0];
+    
+    return StoreFilename;
+    
 }
 
-export async function getUserPfpUrlPaths(userIds: readonly number[]) {
+export async function getPfpStoreFilenames(client: PoolClient, userIds: readonly number[]) {
 
     const query = `
-        SELECT 
-            UserId,
-            get_user_image_temp_link(
-                ProfilePictureImageId,
-                (SELECT current_timestamp - ($1 * interval '1 millisecond'))::timestamp
-            ) 
-        FROM ProfilePictures
-        WHERE UserId = ANY($2);
+        SELECT UserId, StoreFilename
+        FROM ProfilePictureImages
+        JOIN ProfilePictures ON ProfilePictureImages.Id = ProfilePictures.ProfilePictureImageId
+        WHERE UserId = ANY($1);
     `
 
-    const result = await connection.query(query, { params: [makeNewLinkTimeBuffer, userIds] });
+    const result = await client.query({ rowMode: "array", text: query }, [userIds]);
 
     if (!result.rows) {
         console.error("Error for query: \n" + query)
         throw new GraphQLError("Internal server error")
     }
 
-    const userId2Link = new Map(result.rows.map((row) =>
-        [row[0] as number, row[1] as string | null]
+    const userId2StoreFilename = new Map(result.rows.map(([UserId, StoreFilename]) =>
+        [UserId as number, StoreFilename as string]
     ));
 
-    return userIds.map((id) => userId2Link.get(id) ?? null)
-
-
+    return userIds.map((id) => userId2StoreFilename.get(id) ?? null)
 
 }
+ 

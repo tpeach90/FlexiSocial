@@ -1,23 +1,36 @@
 import { createServer } from 'node:http'
 import { createSchema, createYoga } from 'graphql-yoga'
 import { schema } from './schema'
-import { createContext } from "./context"
-import { connection } from './connection'
+import { GraphQLContext, createContext, destroyContext } from "./context"
+import { pool } from './connection'
 
-// Create a Yoga instance with a GraphQL schema.
-const yoga = createYoga({ schema, context: createContext})
-
-// Pass it into a server to hook into request handlers.
-const server = createServer(yoga)
-
-// get database connection
-connection.connect()
-.then(() => {
-    console.log("Got database connection")
-
-    // start server
-    server.listen(4000, () => {
-        console.info('Server is running on http://localhost:4000/graphql')
+export async function makeServer() {
+    // Create a Yoga instance with a GraphQL schema.
+    const yoga = createYoga({
+        schema, 
+        context: createContext,
+        plugins: [
+            {
+                onResponse({serverContext} : {serverContext:GraphQLContext}) {
+                    destroyContext(serverContext)
+                }
+            }
+        ]
     })
-})
+
+    // Pass it into a server to hook into request handlers.
+    const server = createServer(yoga)
+
+    // check that we have a connection to the database.
+    try {
+        pool.query("SELECT NOW()")
+        console.log("Got database connection")
+    } catch (e) {
+        console.error("Failed to get database connection.")
+        throw e;
+    }
+
+    return server;
+}
+
 

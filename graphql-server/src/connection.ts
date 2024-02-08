@@ -1,14 +1,17 @@
-import { Connection } from 'postgresql-client';
+import { Pool, Client, PoolClient } from 'pg'
 
-// specify the database using environment variaibles.
+// pools will use environment variables
+// for connection information
+export const pool = new Pool()
 
-// PGHOST = localhost
-// PGPORT = 5432
-// PGDATABASE = flexisocial
-// PGUSER = flexisocial-user
-// PGPASSWORD = <password> # enter the password here
-// PGSCHEMA = public
-
-// export const connection = new Connection(process.env.DATABASE_URL);
-
-export const connection = new Connection();
+// wrapper to connect/release client 
+export async function withClient(callback: (client: PoolClient) => any) {
+    const client = await pool.connect();
+    try {
+        await callback(client);
+    } catch (e) {
+        throw e;
+    } finally {
+        client.release();
+    }
+}

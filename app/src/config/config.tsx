@@ -2,6 +2,7 @@ import { StyleSheet } from "react-native"
 
 
 export const backendURL = "http://localhost:4000/graphql"
+export const pfpURL = "http://localhost:3000/pfps"
 
 export const colors = {
     black : "#000",
@@ -9,6 +10,7 @@ export const colors = {
     gray: "#BCBDC0",
     light_gray: "#EBEBEB",
     primary: "#6963BD",
+    light_primary: "#7670C5",
     secondary: "#72E060",
     tertiary: "#FFB169",
     background: "#FFF",

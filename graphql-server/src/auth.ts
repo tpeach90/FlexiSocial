@@ -7,11 +7,12 @@
 import { JwtPayload, verify } from "jsonwebtoken";
 import { User } from "./types";
 import { userUuidToUserId } from "./sql/queries";
+import { PoolClient } from "pg";
 
 export const APP_SECRET = 'this is my secret'
 
 
-export async function authenticateUser(request:Request){
+export async function authenticateUser(client: PoolClient, request:Request){
 
     const header = request.headers.get("authorization");
     if (!header) {
@@ -39,7 +40,7 @@ export async function authenticateUser(request:Request){
     // ... probably. maybe something that expires.
 
     // find the userId
-    const id = userUuidToUserId(uuid);
+    const id = userUuidToUserId(client, uuid);
 
     // completely useless check, but just for clarity
     if (!id) return null;

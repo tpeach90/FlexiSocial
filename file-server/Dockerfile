@@ -15,6 +15,6 @@ ENV PGUSER='flexisocial-user'
 ENV PGPASSWORD='cf2EM7FDz;Z`$5%'
 ENV FLEXISOCIAL_STORE='test_store'
 
-EXPOSE 4000
+EXPOSE 3000
 
 CMD ["npm", "start"]

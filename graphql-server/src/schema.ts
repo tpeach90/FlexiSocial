@@ -6,7 +6,7 @@ import { APP_SECRET } from './auth';
 import { User } from './types';
 import { GraphQLContext } from './context';
 import { GraphQLError } from 'graphql';
-import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, getUserPfpUrlPath, queryChatMessages } from './sql/queries';
+import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
 import { createProfilePictureUploadLink, createUser } from './sql/updates';
@@ -44,18 +44,21 @@ export const schema = createSchema<GraphQLContext>({
 
             event: (_, { id }, { eventLoader }) => eventLoader.load(id),
 
-            eventsInBBox: async (_, { east, west, north, south, earliest, latest, excludeTiles }, context) => {
+            eventsInBBox: async (_, { east, west, north, south, earliest, latest, excludeTiles }, {client}) => {
 
                 const tiles = bboxToIntersectedTiles({west, east, south, north});
                 // filter out tiles in the user's provided exclude list
                 const tilesLoaded = excludeTiles ? tiles.filter(tile => !excludeTiles.includes(tile)) : tiles;
 
-                const eventIds = await getEventIdsInTiles(tilesLoaded, {earliest, latest});
+                const eventIds = await getEventIdsInTiles(client, tilesLoaded, {earliest, latest});
 
                 return {tilesLoaded, eventIds};
             },
 
-            me: async (_, { }, { currentUserId }) => currentUserId ? getSensitiveUserInfo(currentUserId) : null // SensitiveUserInfo
+            me: async (_, { }, { userContext, client}) => {
+                const id = await userContext.getId();
+                return id ? await getSensitiveUserInfo(client, id) : null
+            }
 
         },
 
@@ -74,8 +77,8 @@ export const schema = createSchema<GraphQLContext>({
         User: {
             // __resolveReference: ({id}, {}, context) => getUser(id, context),
 
-            eventsOrganized: async ({id}, {}, {eventLoader}) => 
-                (await getEventIdsOrganizedByUser(id))
+            eventsOrganized: async ({id}, {}, {eventLoader, client}) => 
+                (await getEventIdsOrganizedByUser(client, id))
                     .map((eventId) => eventLoader.load(eventId))
             ,
 
@@ -90,7 +93,7 @@ export const schema = createSchema<GraphQLContext>({
         },
 
         UserStats: {
-            eventsOrganizedCount: ({id}, {}, context) => getNumEventsOrganizedByUser(id) 
+            eventsOrganizedCount: ({id}, {}, {client}) => getNumEventsOrganizedByUser(client, id) 
         },
 
         Event: {
@@ -100,7 +103,7 @@ export const schema = createSchema<GraphQLContext>({
                 eventId: parent.id
             }),
 
-            stats: ({id}, {}, context) => getEventStats(id)
+            stats: ({id}, {}, {client}) => getEventStats(client, id)
         },
 
         /**
@@ -108,10 +111,10 @@ export const schema = createSchema<GraphQLContext>({
          */
         Chat: {
             event: ({eventId}, _ , {eventLoader}) => eventLoader.load(eventId),
-            count: ({eventId}, _, context) => getChatMessageCount(eventId),
-            messageQuery: async ({eventId}, params, context) => {
+            count: ({eventId}, _, {client}) => getChatMessageCount(client, eventId),
+            messageQuery: async ({eventId}, params, {client}) => {
                 
-                const {count, hasMore, messageIds} = await queryChatMessages({ eventId , ...params})
+                const {count, hasMore, messageIds} = await queryChatMessages(client, { eventId , ...params})
                 return {count, hasMore, messageIds}
             }
         },
@@ -135,13 +138,13 @@ export const schema = createSchema<GraphQLContext>({
  
         Mutation: {
 
-            signup: async (_, { email, password, displayName }, {}) => {
+            signup: async (_, { email, password, displayName }, {client}) => {
                 // encrypt the user's password with random salt.
                 const hashedPassword = await hash(password, 10)
                 
                 // add to database
                 // this function also checks for valid email format.
-                const uuid = await createUser(displayName, email, hashedPassword);          
+                const uuid = await createUser(client, displayName, email, hashedPassword);          
 
                 // create signed token to give to the user
                 // todo create a better token in the future - this is unsafe
@@ -150,9 +153,9 @@ export const schema = createSchema<GraphQLContext>({
                 return { token}
             },
 
-            login: async (_, { email, password }, {}) => {
+            login: async (_, { email, password }, {client}) => {
                 
-                const uuid = await checkEmailAndPassword(email, password);
+                const uuid = await checkEmailAndPassword(client, email, password);
 
                 if (!uuid) {
                     throw new GraphQLError("Email or password incorrect")
@@ -164,23 +167,22 @@ export const schema = createSchema<GraphQLContext>({
                 return {token};
             },
 
-            uploadPfp: async (_, {}, {currentUserId}) => {
+            uploadPfp: async (_, {}, {userContext, client}) => {
 
-                if (!currentUserId) throw new GraphQLError("Not authorized")
+                const id = await userContext.getId();
+
+                if (!id) throw new GraphQLError("Not authorized")
 
                 // TODO create a temporary upload link.
-                const {link, expiryTimestamp} = await createProfilePictureUploadLink(currentUserId);
+                const { link, expiryTimestamp } = await createProfilePictureUploadLink(client, id);
 
                 return {link, expiryTimestamp}
                 
 
             }
         },
-
-
-        }
     }
-)
+})
 
 
 

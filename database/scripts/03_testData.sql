@@ -164,13 +164,5 @@ DO $$
         );
         -- =================================================================
 
-        -- add a temp link to download the file. (this would be created by the graphql server when a user asks for it)
-        INSERT INTO UserImageLinks(Link, ProfilePictureImageId, ExpiryTimestamp)
-        VALUES (
-            'c02e115ffe5d6438.png',
-            johnsPfpImageId,
-            '2099-01-16 14:48:52.430335' -- stupidly long time, just for testing. Default is 20 mins from now
-        );
-
     END
 $$;

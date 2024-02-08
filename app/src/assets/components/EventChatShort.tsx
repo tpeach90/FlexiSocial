@@ -59,6 +59,7 @@ export default function EventChatShort(props: EventChatProps) {
                         onPressUser={() => navigation.navigate("UserScreen", { id: message.author.id })}
                         replyeeDisplayName={message.reply?.author.displayName}
                         onPressReplyee={() => console.log(`Focus chat message ${message.reply?.id}`)}
+                        profilePicture={message.author.profilePicture}
                         key={i}
                     />
                 )}

@@ -32,7 +32,8 @@ export type StateNonPersistentSlice = {
             eventId?: number,
             title?: string,
             displayChat?: boolean
-        }
+        },
+        sideMenuActive: boolean
         
     },
     userScreen: {
@@ -49,7 +50,7 @@ export type State = {
 
 // initial state
 export const initialPersistentState: StatePersistentSlice = {
-    userToken: null,
+    userToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNmExOTY2NmMtY2ZjNi00YWJjLWI4Y2UtNmUyMmVmZDRjYWJhIiwiaWF0IjoxNzA3MjM4NTc4fQ.ulqPGkDmZbqFuogLvRgXIRLSlG0rxc2Udwq15Y79m8k", // todo remember to remove this. This is jamir ochoa's token
     mapScreen: {
         toggles: {
             today: true,
@@ -66,7 +67,8 @@ export const initialNonPersistentState: StateNonPersistentSlice = {
         tilesLoaded:[],
         eventInfo: {
             active: false,
-        }
+        },
+        sideMenuActive: false
     },
     userScreen: {
         

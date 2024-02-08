@@ -43,6 +43,7 @@ export const GET_CHAT = gql`
                             id
                             displayName
                             roleInEvent(eventId:$id)
+                            profilePicture
                         }
                         time
                         content
@@ -127,6 +128,7 @@ export const GET_USER = gql`
                 eventsOrganizedCount
             }
             registerTimestamp
+            profilePicture
         }
     }
 `

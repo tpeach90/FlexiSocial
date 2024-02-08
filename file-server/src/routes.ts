@@ -41,60 +41,37 @@ app.use(bodyParser.json());
 
 
 // get file
-app.get("/userimages/:tempLink", ({ params: { tempLink } }, res, next) => 
+app.get("/pfps/:storeFilename", ({ params: { storeFilename } }, res, next) => 
     withClient(next, (client) =>
-        getUserImage(client, tempLink, res)
+        getUserImage(client, storeFilename, res)
     )
 );
 
-async function getUserImage(client: PoolClient, tempLink:string, res:Response) {
-    // get the actual filename from the database + metadata.
-    const query = `
-        SELECT
-            UploadedTimestamp,
-            Deleted,
-            StoreFilename,
-            ExpiryTimestamp,
-            current_timestamp
-        FROM ProfilePictureImages
-        RIGHT JOIN UserImageLinks
-        ON UserImageLinks.ProfilePictureImageId = ProfilePictureImages.Id
-        WHERE UserImageLinks.Link = $1
-    `;
+async function getUserImage(client: PoolClient, storeFilename:string, res:Response) {
 
-    const result = await client.query(query, [tempLink]);
+    // check that the pfp exists, also that it hasn't been soft deleted in the db.
+    const query = `
+        SELECT Deleted 
+        FROM ProfilePictureImages
+        WHERE StoreFilename = $1;
+    `
+
+    const result = await client.query(query, [storeFilename]);
 
     if (result.rows.length != 1) {
         res.status(404).send(); // not found
         return;
     }
 
-    const { 
-        uploadedtimestamp,
-        deleted,
-        storefilename,
-        expirytimestamp,
-        current_timestamp 
-    } : {
-        uploadedtimestamp: Date,
-        deleted: boolean,
-        storefilename: string,
-        expirytimestamp: Date,
-        current_timestamp: Date
-    }  = result.rows[0];
+    const deleted = result.rows[0].deleted as boolean;
 
     if (deleted) {
-        res.status(404).send();
-        return;
-    }
-
-    if (current_timestamp > expirytimestamp) {
-        res.status(404).send();
+        res.status(404).send(); // deleted
         return;
     }
 
     // check that the file is in the store
-    const pathToFile = path.resolve(STORE, PROFILE_PICTURE_FOLDER, storefilename);
+    const pathToFile = path.resolve(STORE, PROFILE_PICTURE_FOLDER, storeFilename);
     try {
         await fs.promises.access(pathToFile, fs.constants.R_OK);
     } catch {
@@ -115,7 +92,7 @@ async function getUserImage(client: PoolClient, tempLink:string, res:Response) {
 
 
 // upload file
-// one file required: "pfp" - must be < 5MB, jpg or png
+// one file required: "pfp" - must be < 5MB, jpg or png. Must be at least 100x100 px.
 
 // eg:
 // curl -i -X POST -H "Content-Type: multipart/form-data" -F "pfp=@/home/thomas/Misc/fluffy_slime.png" http://localhost:3000/userimages/69170a21f12b4bcb58fff7e1e19270cc
@@ -123,7 +100,7 @@ async function getUserImage(client: PoolClient, tempLink:string, res:Response) {
 // convert between fileType and Jimp stuff.
 const allowedMimeTypes = ["image/png", "image/jpeg"];
 
-app.post("/userimages/:tempLink", upload.single('pfp'), async (req, res, next) => {
+app.post("/pfps/:tempLink", upload.single('pfp'), async (req, res, next) => {
     await withClient(next, (client) => 
         uploadUserProfilePicture(client, req, res)
     );

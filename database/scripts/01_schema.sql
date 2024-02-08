@@ -99,16 +99,16 @@ CREATE TABLE ProfilePictureImages (
     StoreFilename char(32) UNIQUE NOT NULL -- DEFAULT md5(random()::text)
 );
 
--- temporary links to user images.
--- todo what is the point of this???? remove it later probablt.
-CREATE TABLE UserImageLinks (
-    Link varchar(32) NOT NULL PRIMARY KEY DEFAULT md5(random()::text),
-    ProfilePictureImageId integer NOT NULL,
-    ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (20 * interval '1 minute'), -- expires in 20 minutes
-    -- don't allow the use of expired links, and periodically remove these entries from the database.
+-- -- temporary links to user images.
+-- -- todo what is the point of this???? remove it later probablt.
+-- CREATE TABLE UserImageLinks (
+--     Link varchar(32) NOT NULL PRIMARY KEY DEFAULT md5(random()::text),
+--     ProfilePictureImageId integer NOT NULL,
+--     ExpiryTimestamp timestamp NOT NULL DEFAULT current_timestamp + (20 * interval '1 minute'), -- expires in 20 minutes
+--     -- don't allow the use of expired links, and periodically remove these entries from the database.
 
-    FOREIGN KEY (ProfilePictureImageId) REFERENCES ProfilePictureImages(Id) ON DELETE CASCADE
-);
+--     FOREIGN KEY (ProfilePictureImageId) REFERENCES ProfilePictureImages(Id) ON DELETE CASCADE
+-- );
 
 
 CREATE TABLE ProfilePictureUploadLinks (
@@ -147,42 +147,42 @@ FOR EACH ROW
 EXECUTE FUNCTION on_profile_picture_delete();
 
 
--- get or create a temp link.
-CREATE OR REPLACE FUNCTION get_user_image_temp_link(imgid int, cutoff timestamp DEFAULT current_timestamp)
-RETURNS varchar(32)
-AS $$
-    DECLARE LinkToReturn varchar(32);
+-- -- get or create a temp link.
+-- CREATE OR REPLACE FUNCTION get_user_image_temp_link(imgid int, cutoff timestamp DEFAULT current_timestamp)
+-- RETURNS varchar(32)
+-- AS $$
+--     DECLARE LinkToReturn varchar(32);
 
-    BEGIN
-        -- -- lock the pfp image to prevent other links being made.
-        -- PERFORM null FROM ProfilePictureImages
-        -- WHERE Id = imgid
-        -- FOR UPDATE;
+--     BEGIN
+--         -- -- lock the pfp image to prevent other links being made.
+--         -- PERFORM null FROM ProfilePictureImages
+--         -- WHERE Id = imgid
+--         -- FOR UPDATE;
 
-        --  check that the image actual exists
-        IF NOT EXISTS(SELECT null FROM ProfilePictureImages WHERE Id=imgid) THEN
-            RETURN NULL;
-        END IF;
+--         --  check that the image actual exists
+--         IF NOT EXISTS(SELECT null FROM ProfilePictureImages WHERE Id=imgid) THEN
+--             RETURN NULL;
+--         END IF;
 
-        LinkToReturn := null;
-        SELECT Link
-        INTO LinkToReturn
-        FROM UserImageLinks
-        WHERE ProfilePictureImageId = imgid
-        AND ExpiryTimestamp > cutoff
-        ORDER BY ExpiryTimestamp DESC
-        LIMIT 1;
+--         LinkToReturn := null;
+--         SELECT Link
+--         INTO LinkToReturn
+--         FROM UserImageLinks
+--         WHERE ProfilePictureImageId = imgid
+--         AND ExpiryTimestamp > cutoff
+--         ORDER BY ExpiryTimestamp DESC
+--         LIMIT 1;
         
-        IF LinkToReturn IS NULL THEN
-            -- create new link.
-        	INSERT INTO UserImageLinks (ProfilePictureImageId)
-                VALUES (imgid)
-                RETURNING Link INTO LinkToReturn;
-        END IF;
+--         IF LinkToReturn IS NULL THEN
+--             -- create new link.
+--         	INSERT INTO UserImageLinks (ProfilePictureImageId)
+--                 VALUES (imgid)
+--                 RETURNING Link INTO LinkToReturn;
+--         END IF;
 
-	RETURN LinkToReturn;
-    END
-$$ LANGUAGE plpgsql;
+-- 	RETURN LinkToReturn;
+--     END
+-- $$ LANGUAGE plpgsql;
 
 
 -- -- adapted from chatgpt.

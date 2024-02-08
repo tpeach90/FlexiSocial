@@ -39,6 +39,10 @@ export type Action = {
     payload: {
         id?: number
     }
+} |
+{
+    type: "setMapScreenSideMenuActive",
+    payload: boolean
 }
 
 
@@ -49,8 +53,17 @@ export type Action = {
  * @param action 
  * @returns Updated non-persistent slice of the state
  */
-function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersistentState, action: Action): StateNonPersistentSlice
+function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersistentState, action: Action ): StateNonPersistentSlice
 {
+    // // handle arrays - multiple actions done at once
+    // if (Array.isArray(action)) {
+    //     let newState = state;
+    //     for (const a of action) {
+    //         newState = nonPersistentReducer(newState, a);
+    //     }
+    //     return newState;
+    // }
+
     switch (action.type) {
 
         case "setScreenStack":
@@ -84,6 +97,30 @@ function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersist
                 }
             }
         
+        case "setMapScreenSideMenuActive":
+            if (action.payload)
+                return {
+                    ...state,
+                    mapScreen: {
+                        ...state.mapScreen,
+                        sideMenuActive: true,
+                        eventInfo: {
+                            ...state.mapScreen.eventInfo,
+                            active: false
+                        },
+                    },
+
+                }
+            else 
+                return {
+                    ...state,
+                    mapScreen: {
+                        ...state.mapScreen,
+                        sideMenuActive: false
+                    }
+                }
+   
+        
         default: return state;
     }
 }
@@ -94,6 +131,17 @@ function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersist
  * @returns Updated persistent slice of the state
  */
 function persistentReducer(state: StatePersistentSlice = initialPersistentState, action: Action): StatePersistentSlice {
+
+    // // handle arrays - multiple actions done at once
+    // if (Array.isArray(action)) {
+    //     let newState = state;
+    //     for (const a of action) {
+    //         newState = persistentReducer(newState, a);
+    //     }
+    //     return newState;
+    // }
+
+
     switch (action.type) {
 
         case "setUserToken":

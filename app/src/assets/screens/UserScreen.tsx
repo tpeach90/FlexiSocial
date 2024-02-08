@@ -6,11 +6,12 @@ import { GET_USER } from "../../graphql/queries";
 import { SafeAreaView } from "react-native-safe-area-context";
 import IconButton from "../components/IconButton";
 import { faCalendarDays, faChevronLeft, faEllipsisV, faPen } from "@fortawesome/free-solid-svg-icons";
-import { colors, fonts, universalStyles } from "../../config/config";
+import { colors, fonts, pfpURL, universalStyles } from "../../config/config";
 import Flair from "../components/Flair";
 import UserTextRenderer from "../../utils/UserTextRenderer";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import moment from "moment";
+import FastImage from "react-native-fast-image";
 
 
 
@@ -38,10 +39,18 @@ export const UserScreen: React.FC<UserScreen> = ({navigation, route}) => {
             }
             return (
                 <View>
-                    <Image 
-                        source={require("../../assets/images/defaultPfp.png")} 
-                        style={styles.pfpStyle}
-                    />
+                    {
+                        userData.user.profilePicture 
+                            ? <FastImage
+                                style={styles.pfpStyle}
+                                source={{ uri: pfpURL + "/" + userData.user.profilePicture }}
+                                onError={() => console.error("User pfp failed to load.")}
+                            />
+                            : <Image
+                                source={require("../../assets/images/defaultPfp.png")}
+                                style={styles.pfpStyle}
+                            />
+                    }
                     <Text style={styles.userNameStyle}>{userData.user.displayName}</Text>
                     {(() => {
                         switch (userData.user.role) {
@@ -145,7 +154,9 @@ const styles = StyleSheet.create({
     pfpStyle: {
         width: 120,
         height: 120,
-        alignSelf:"center"
+        alignSelf:"center",
+        borderRadius: 60,
+        overflow:"hidden"
     },
     userNameStyle: {
         ...universalStyles.h1,

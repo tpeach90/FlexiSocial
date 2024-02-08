@@ -12,6 +12,7 @@ import { useQuery } from "@apollo/client";
 import { GET_MY_ID } from "../../graphql/queries";
 import { useRef, useState } from "react";
 import { State } from "../../redux/state";
+import SideMenu from "react-native-side-menu-updated";
 
 
 
@@ -21,8 +22,11 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
 
     const navigation = useNavigation<NativeStackNavigationProp<DebugStackParamList>>();
 
+
     const { loading, error, data } = useQuery(GET_MY_ID, {fetchPolicy: "no-cache"});
     const userToken = useSelector((state: State) => state.persistent.userToken);
+
+    const [sideMenuOpen, setSideMenuOpen ] = useState<boolean>(false);
 
 
     const menuPan = useRef(new Animated.Value(0)).current;
@@ -59,20 +63,32 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
     // console.log(loading, error, data);
 
     return (
-        // <View style={[StyleSheet.absoluteFillObject]}>
 
-            <Animated.ScrollView
-                style={[StyleSheet.absoluteFillObject, {
-                    transform: [{ translateY: menuPan }],
-                    // width: "100%",
-                    // height: "100%",
-                }]}
-                {...menuPanResponder.panHandlers}
-            >
-                <Text>{"a\n".repeat(100)}</Text>
-            </Animated.ScrollView>
+        <>
+            {/* ignore the intellisense error - It seems to work fine. 
+            Possibly caused by me using react-native-side-menu-updated with the old non updated type declarations module.*/}
+            <SideMenu
+                isOpen={sideMenuOpen}
+                // hiddenMenuOffset={100}
+                menu={(
+                    <View style={{backgroundColor: "#F00"}}>
+                        <Text>This is the side menu.</Text>
+                    </View>
+                )}
+                onChange={(isOpen) => setSideMenuOpen(isOpen)}
+                
+            >  
+                <View style={{backgroundColor:"#FFF"}}>
+                    <Text>This is the content.</Text>
+                    <Text>The current user token is {userToken}</Text>
+                    <TouchableOpacity onPress={goToMyUserPage}>
+                        <Text>Go to my user page</Text>
+                    </TouchableOpacity>
+                </View>
 
-        // </View>
+            </SideMenu>
+
+        </>
     )
 
 }

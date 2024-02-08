@@ -1,5 +1,4 @@
 import { GraphQLError } from "graphql";
-import { connection } from "../connection";
 import { GraphQLContext } from "../context";
 
 import { Event as EventObj, User, UserEventRole } from "../types"
@@ -7,6 +6,7 @@ import { tileToBBox } from "../tiles";
 import { zip } from "underscore";
 import * as EmailValidator from 'email-validator';
 import { accountWithEmailExists } from "./queries";
+import { PoolClient } from "pg";
 
 
 
@@ -17,7 +17,7 @@ import { accountWithEmailExists } from "./queries";
  * @param hashedPassword NOT CHECKED in this function.
  * @returns uuid of new user
  */
-export async function createUser(displayName:string, email:string, hashedPassword:string) {
+export async function createUser(client: PoolClient, displayName:string, email:string, hashedPassword:string) {
 
     // check the inputs against the database schema.
     if (displayName.length < 1 || displayName.length>255) {
@@ -29,7 +29,7 @@ export async function createUser(displayName:string, email:string, hashedPasswor
         throw new GraphQLError("Email not valid")
     };
 
-    if (await accountWithEmailExists(email)) {
+    if (await accountWithEmailExists(client, email)) {
         throw new GraphQLError("Account with this email address already exists.")
     }
 
@@ -42,8 +42,8 @@ export async function createUser(displayName:string, email:string, hashedPasswor
         VALUES ($1, $2, $3)
         RETURNING Uuid
     `
-
-    const result = await connection.query(update, { params: [displayName, email, hashedPassword] })
+    
+    const result = await client.query({ rowMode: "array", text: update }, [displayName, email, hashedPassword]);
 
 
     if (!result.rows || result.rows.length != 1) {
@@ -57,7 +57,7 @@ export async function createUser(displayName:string, email:string, hashedPasswor
 }
 
 
-export async function createProfilePictureUploadLink(userId: number) {
+export async function createProfilePictureUploadLink(client: PoolClient, userId: number) {
     // assume that the user exists. If they don't then the database update will error due to foreign key constraints.
 
     const update = `
@@ -66,14 +66,14 @@ export async function createProfilePictureUploadLink(userId: number) {
         RETURNING Link, ExpiryTimestamp
     `;
 
-    const result = await connection.query(update, { params: [userId] })
+    const result = await client.query({ rowMode: "array", text: update }, [userId]);
 
     if (!result.rows || result.rows.length != 1) {
         console.error("Error for update: \n" + update)
         throw new Error("Internal server error")
     }
 
-    const [Link, ExpiryTimestamp]: [string, number] = result.rows[0];
+    const [Link, ExpiryTimestamp] = result.rows[0] as [string, number];
 
     return {link: Link, expiryTimestamp: ExpiryTimestamp}
 }

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Animated, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import TagButton from "../components/TagButton";
 import { addMarkers, setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
 import MapScreenTagBar from "../components/MapScreenTagBar";
@@ -22,6 +22,8 @@ import EventInfoNew from "../components/EventInfoNew";
 import EventInfoHeader from "../components/EventInfoHeader";
 import { Action } from "../../redux/reducer";
 import EventChatShort from "../components/EventChatShort";
+import SideMenu from "react-native-side-menu-updated";
+import { faDisplay } from "@fortawesome/free-solid-svg-icons";
 
 const menuWidth = 300;
 
@@ -30,33 +32,12 @@ type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
 
 export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
 
-    // const [menuActive, setMenuActive] = useState(false);
-    // const menuPan = useRef(new Animated.Value(0)).current;
-    // const menuPanResponder = useRef(PanResponder.create({
-    //     onMoveShouldSetPanResponder: (event, gestureState) => {
-    //         event.stopPropagation();
-    //         return false;
-    //     },
-    //     // map dx directly to the animated variable.
-    //     onPanResponderMove: (event, gestureState) =>  {
-    //         event.stopPropagation();
-    //         menuPan.setValue((menuActive? menuWidth: 0) + gestureState.dx)
-    //     },
-    //     // onShouldBlockNativeResponder: () => true
-    //     onStartShouldSetPanResponderCapture: (e, gestureState) => true,
-    //     onPanResponderStart: (event, gestureState) => event.stopPropagation(),
-    //     onPanResponderEnd: (event, gestureState) => event.stopPropagation(),
-    //     onStartShouldSetPanResponder: () => false,
-    //     // onStartShouldSetPanResponderCapture: () => false,
-    //     // onMoveShouldSetPanResponder: () => false,
-    //     onMoveShouldSetPanResponderCapture: () => false,
-
-    // })).current;
-
+    const insets = useSafeAreaInsets();
     const mapRef = useRef<MapView>(null);
     // const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
     const { markers, tilesLoaded } = useSelector((state: State) => state.nonPersistent.mapScreen);
     const eventInfoPanelStatus = useSelector((state: State) => state.nonPersistent.mapScreen.eventInfo);
+    const sideMenuActive = useSelector((state: State) => state.nonPersistent.mapScreen.sideMenuActive)
 
     // bottom sheet stuff.
     const sheetRef = useRef<BottomSheetModal>(null);
@@ -73,7 +54,8 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
         }
     }, [eventInfoPanelStatus]);
     const handleXButtonPress = useCallback(() => {
-        sheetRef.current?.dismiss()
+        // sheetRef.current?.dismiss()
+        dispatch<Action>({ type: "setEventInfoPanelStatus", payload: { active: false } })
     }, [])
     const handleClosePress = useCallback(() => {
         dispatch<Action>({type: "setEventInfoPanelStatus", payload: {active: false}})
@@ -92,6 +74,10 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
     useEffect(() => {
         if (eventInfoPanelStatus.active) {
             sheetRef.current?.present();
+        } else {
+            // If the user pulls to dismiss the sheet then the action is fired. In that case the sheet is already dismissed and this (shouldn't) have any effect.
+            // bit nasty unfortunately.
+            sheetRef.current?.dismiss();
         }
     }, [eventInfoPanelStatus.active])
 
@@ -151,23 +137,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
         })
     }
 
-    
-
-    // create queries for new data
-    // useEffect(() => {
-    //     if (!markersLoading && requestNewData && region) {
-    //         getMarkers({variables: {
-    //             west: region.longitude,
-    //             south: region.latitude,
-    //             east: region.longitude+region.longitudeDelta,
-    //             north: region.latitude + region.latitudeDelta,
-    //             excludeTiles:     
-    //         }})
-    //         setRequestNewData(false);
-    //     }
-    // }, [markersLoading, region, requestNewData])
-
-
     return (
         <BottomSheetModalProvider>
             <StatusBar
@@ -177,62 +146,65 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
                 barStyle={"dark-content"}
             />
 
+            {/* ignore the intellisense error - It seems to work fine. 
+            Possibly caused by using react-native-side-menu-updated with the old non updated type declarations module.*/}
+            {/* @ts-ignore */}
+            <SideMenu
+                isOpen={sideMenuActive}
+                // hiddenMenuOffset={100}
+                menu={<AppMenu/>}
+                // this action also closes the bottom modal if open.
+                onChange={(active) => dispatch<Action>({ type: "setMapScreenSideMenuActive", payload: active })}
+            >
+                <View style={styles.container}>
 
-            <View style={styles.container}>
+                    {/* map. */}
+                    <MapView
+                        ref={mapRef}
+                        style={styles.map}
+                        showsUserLocation={true}
+                        showsMyLocationButton={true}
+                        customMapStyle={googleMapsStyle}
+                        mapPadding={insets} // ensure google buttons/etc render inside the safe area
+                        onMapReady={() => {
+                            PermissionsAndroid.request(
+                                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                            )
+                        }}
+                        onRegionChangeComplete={getNewData}
+                    // moveOnMarkerPress={false}
+                    >
+                        {markers.map((marker, i) =>
+                            <Marker
+                                coordinate={{ latitude: marker.lat, longitude: marker.lon }}
+                                pinColor={colors.primary}
+                                key={i}
+                                onPress={() => dispatch<Action>({
+                                    type: "setEventInfoPanelStatus",
+                                    payload: {
+                                        active: true,
+                                        eventId: marker.id,
+                                        title: marker.name,
+                                        displayChat: false
+                                    }
+                                })}
+                            // TODO add a custom marker here!!
+                            // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
+                            />
+                        )}
 
-                {/* map. */}
-                <MapView
-                    ref={mapRef}
-                    style={styles.map}
-                    showsUserLocation={true}
-                    showsMyLocationButton={true}
-                    customMapStyle={googleMapsStyle}
-                    mapPadding={{
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        top: 45 // this prevents icons being hidden by the tags.
-                        // TODO may cause issues on IOS - map padding might need to be increased to account for the notch
-                    }}
-                    onMapReady={() => {
-                        PermissionsAndroid.request(
-                            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                        )
-                    }}
-                    onRegionChangeComplete={getNewData}
-                // moveOnMarkerPress={false}
-                >
-                    {markers.map((marker, i) =>
-                        <Marker
-                            coordinate={{ latitude: marker.lat, longitude: marker.lon }}
-                            pinColor={colors.primary}
-                            key={i}
-                            onPress={() => dispatch<Action>({
-                                type: "setEventInfoPanelStatus",
-                                payload: {
-                                    active: true,
-                                    eventId: marker.id,
-                                    title: marker.name,
-                                    displayChat: false
-                                }
-                            })}
-                        // TODO add a custom marker here!!
-                        // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
-                        />
-                    )}
-
-                </MapView>
-
-
-                {/* things that sit on top of the map. */}
-                <SafeAreaView
-                    pointerEvents="box-none" // allows users to interact with the map behind this view.
-                    style={[StyleSheet.absoluteFillObject]}
-                >
+                    </MapView>
 
 
+                    {/* things that sit on top of the map. */}
+                    <SafeAreaView
+                        pointerEvents="box-none" // allows users to interact with the map behind this view.
+                        style={[StyleSheet.absoluteFillObject]}
+                    >
 
-                    {/* menu at the side of the screen
+
+
+                        {/* menu at the side of the screen
 
                     <Animated.View
                         style={{
@@ -252,44 +224,45 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
                     </Animated.View> */}
 
 
-                    {/* <MapScreenTagBar /> */}
+                        {/* <MapScreenTagBar /> */}
 
-                    {/* <View style={{flex:1}}>
+                        {/* <View style={{flex:1}}>
                         {eventInfoPanelStatus.active
                             ? <EventFullInfoPanel eventId={eventInfoPanelStatus.eventId} />
                             : undefined
                         }
                     </View> */}
 
-                    {/* Event sheet. */}
-                    <BottomSheetModal
-                        ref={sheetRef}
-                        snapPoints={snapPoints}
-                        onChange={handleSheetChange}
-                        style={{ paddingHorizontal: 25 }}
-                        onDismiss={handleClosePress}
-                        enablePanDownToClose={true}
-                        backgroundStyle={{backgroundColor: "#FFFE"}}
-                    >
-                        <BottomSheetView>
-                            <EventInfoHeader
-                                title={eventInfoPanelStatus.title ?? ""}
-                                closeEventPressed={handleXButtonPress}
-                            />
-                        </BottomSheetView>
-                        <BottomSheetScrollView>
-                            <EventInfoNew
-                                eventId={eventInfoPanelStatus.eventId}
-                            />
-                            {eventInfoPanelStatus.displayChat 
-                                ? <EventChatShort eventId={eventInfoPanelStatus.eventId} /> 
-                                : undefined
-                            }
-                        </BottomSheetScrollView>
-                    </BottomSheetModal>
+                        {/* Event sheet. */}
+                        <BottomSheetModal
+                            ref={sheetRef}
+                            snapPoints={snapPoints}
+                            onChange={handleSheetChange}
+                            style={{ paddingHorizontal: 25 }}
+                            onDismiss={handleClosePress}
+                            enablePanDownToClose={true}
+                            backgroundStyle={{ backgroundColor: "#FFFE" }}
+                        >
+                            <BottomSheetView>
+                                <EventInfoHeader
+                                    title={eventInfoPanelStatus.title ?? ""}
+                                    closeEventPressed={handleXButtonPress}
+                                />
+                            </BottomSheetView>
+                            <BottomSheetScrollView>
+                                <EventInfoNew
+                                    eventId={eventInfoPanelStatus.eventId}
+                                />
+                                {eventInfoPanelStatus.displayChat
+                                    ? <EventChatShort eventId={eventInfoPanelStatus.eventId} />
+                                    : undefined
+                                }
+                            </BottomSheetScrollView>
+                        </BottomSheetModal>
 
-                </SafeAreaView>
-            </View>
+                    </SafeAreaView>
+                </View>
+            </SideMenu>
         </BottomSheetModalProvider>
     )
 

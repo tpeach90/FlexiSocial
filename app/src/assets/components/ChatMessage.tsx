@@ -1,17 +1,20 @@
 import { Image, Pressable, StyleSheet, Text, TextBase, Touchable, TouchableOpacity, View } from "react-native"
-import { colors, fonts, universalStyles } from "../../config/config"
+import { colors, fonts, pfpURL, universalStyles } from "../../config/config"
 import { UserEventRole } from "../../utils/types"
 import { faArrowLeft, faEllipsisVertical, faLeftLong } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 import Flair from "./Flair"
 import UserTextRenderer from "../../utils/UserTextRenderer"
+import FastImage from "react-native-fast-image";
+
 
 interface ChatMessageProps {
     image?: any,
     userDisplayName: string,
     content: string,
     eventRole: UserEventRole,
-    replyeeDisplayName?: string
+    replyeeDisplayName?: string,
+    profilePicture?:string|null,
     onPressUser?: () => any,
     onPressReplyee?: () => any
 
@@ -22,7 +25,19 @@ export default function ChatMessage(props: ChatMessageProps) {
     return (
         <View style={styles.container}>
             <Pressable onPress={() => props.onPressUser?.()}>
-                <Image source={props.image} style={{width:40, height:40}}></Image>
+                {
+                    props.profilePicture
+                        ? <FastImage
+                            style={styles.pfp}
+                            source={{ uri: pfpURL + "/" + props.profilePicture }}
+                            onError={() => console.error("User pfp failed to load.")}
+                        />
+                        : <Image
+                            source={require("../../assets/images/defaultPfp.png")}
+                            style={styles.pfp}
+                        />
+                }
+                {/* <Image source={props.image} style={{width:40, height:40}}></Image> */}
             </Pressable>
             <View style={styles.main}>
                 <View style={{justifyContent:"space-between", flexDirection:"row", flexShrink:1}}>
@@ -125,4 +140,10 @@ const styles = StyleSheet.create({
     flair: {
         marginLeft:5
     },
+    pfp: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        overflow: "hidden"
+    }
 })
