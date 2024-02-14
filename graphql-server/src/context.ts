@@ -65,7 +65,11 @@ export async function createContext(initialContext: YogaInitialContext): Promise
     }
 }
 
-export async function destroyContext(context: GraphQLContext) {
+/**
+ * 
+ * @param context The context, if it was created. If yoga fails to parse the query then custom context will never be created. Check any variables exist before doing anything with them!
+ */
+export async function destroyContext(context: Partial<GraphQLContext>) {
 
-    context.client.release();
+    context.client?.release();
 }

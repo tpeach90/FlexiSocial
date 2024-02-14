@@ -11,9 +11,12 @@ export async function makeServer() {
         context: createContext,
         plugins: [
             {
-                onResponse({serverContext} : {serverContext:GraphQLContext}) {
-                    destroyContext(serverContext)
+                onResponse: ({serverContext}) => {
+                    destroyContext(serverContext as GraphQLContext);
                 }
+                // () {
+                //     destroyContext(serverContext)
+                // }
             }
         ]
     })

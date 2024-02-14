@@ -602,7 +602,6 @@ export async function getEventIdsInTiles(client: PoolClient, tiles: number[], ra
  */
 export async function getUserRolesInEvent(client: PoolClient, userIds: number[], eventId: number) {
 
-    console.log(userIds, eventId);
 
     const query = `
         SELECT UserId, Role
