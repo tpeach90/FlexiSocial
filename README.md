@@ -8,9 +8,10 @@ Below is an outline of the application technology stack.
 
 + PostgreSQL database, making use of the PostGIS extension for storing geographical data.
 + GraphGL Yoga server.
++ File server (currently used only for serving and uploading user images)
 + React Native app/front end. Using React Redux for state management and Apollo Client for contacting the graphQL server.
 
-Typescript is the language used for the server and app.
+Typescript is the language used for the servers and app.
 
 ## How to install and run
 
@@ -20,7 +21,7 @@ Clone this repository onto your machine (or download and unpack the zip file).
 git clone https://github.com/tpeach90/FlexiSocial.git
 ```
 
-The rest of this section is instructions on how to set up the 3 parts of the stack.
+The rest of this section is instructions on how to set up the parts of the stack.
 
 > ℹ️ **_NOTE:_**  
 > If you're not going to develop the backend and just want to run it, then the database and GraphQL server can both be run with [Docker](https://www.docker.com/products/docker-desktop/). A shell script and batch file are provided for the setup, and the following **Database** and **GraphQL server** sections can be skipped.
@@ -105,6 +106,32 @@ Start the server.
 ```bash
 npm start
 ```
+
+### File server
+
+Steps are the same as for the GraphQL server, except there are a couple more environment variables you need to set related to where the store is located.
+
+```bash
+cd file-server
+npm install
+export PGHOST=localhost \
+PGPORT=5432 \
+PGDATABASE=flexisocial \
+PGUSER=flexisocial-user \
+PGPASSWORD='cf2EM7FDz;Z`$5%' \
+PGSCHEMA=public \
+FLEXISOCIAL_STORE='test_store'
+```
+
+`FLEXISOCIAL_STORE='test_store'` means that the file server will use the directory `./file-server/test_store` to store user data.
+
+
+To start the server:
+
+```bash
+npm start
+```
+
 ### App
 
 Follow the below instructions to set up React Native using the React Native CLI. Again, the LTS version of Node is probably fine, but in case you experience issues, the version used to develop was `v18.17.1`.
@@ -132,9 +159,10 @@ Then in another terminal window:
 npm run android
 ```
 
-For the emulator to have access to the graphql server, you need to expose the port 4000:
+For the emulator to have access to the graphql server and file server, you need to expose the ports 4000 and 3000 respectively:
 ```bash
 adb reverse tcp:4000 tcp:4000
+adb reverse tcp:3000 tcp:3000
 ```
 
 
