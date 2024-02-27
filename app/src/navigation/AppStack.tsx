@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AppStackParamList } from "./paramLists";
 import { MapScreen } from "../assets/screens/MapScreen";
 import { UserScreen } from "../assets/screens/UserScreen";
+import { CreateEventScreen } from "../assets/screens/CreateEventScreen";
 
 
 
@@ -17,6 +18,7 @@ export default function AppStack(): JSX.Element {
         >
             <stack.Screen name="MapScreen" component={MapScreen} />
             <stack.Screen name="UserScreen" component={UserScreen} />
+            <stack.Screen name="CreateEventScreen" component={CreateEventScreen} />
         </stack.Navigator>
     )
 }

@@ -67,6 +67,7 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
         <>
             {/* ignore the intellisense error - It seems to work fine. 
             Possibly caused by me using react-native-side-menu-updated with the old non updated type declarations module.*/}
+            {/* @ts-ignore */}
             <SideMenu
                 isOpen={sideMenuOpen}
                 // hiddenMenuOffset={100}
@@ -83,6 +84,9 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
                     <Text>The current user token is {userToken}</Text>
                     <TouchableOpacity onPress={goToMyUserPage}>
                         <Text>Go to my user page</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate("CreateEventScreen")}>
+                        <Text>Go to the create event page</Text>
                     </TouchableOpacity>
                 </View>
 

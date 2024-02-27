@@ -230,7 +230,7 @@ export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ naviga
                                 blurOnSubmit: false,
                                 returnKeyType: "next",
                                 spellCheck: false,
-                                editable: !submitting
+                                editable: !submitting,
                             }}
                         />
 

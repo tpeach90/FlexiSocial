@@ -10,12 +10,15 @@ export type AppStackParamList = {
     MapScreen: undefined,
     UserScreen: {
         id: number
-    }
+    },
+    CreateEventScreen: undefined
 }
 
 export type DebugStackParamList = {
     DebugScreen: undefined,
     UserScreen: {
         id: number
-    }
+    },
+    CreateEventScreen: undefined
+
 }
