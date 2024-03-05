@@ -10,9 +10,11 @@ import EventFullInfoPanel from "../components/EventFullInfoPanel";
 import UserTextRenderer from "../../utils/UserTextRenderer";
 import { useQuery } from "@apollo/client";
 import { GET_MY_ID } from "../../graphql/queries";
-import { useRef, useState } from "react";
+import { Dispatch, useRef, useState } from "react";
 import { State } from "../../redux/state";
 import SideMenu from "react-native-side-menu-updated";
+import { Action } from "../../redux/reducer";
+import { client } from "../../utils/apolloClientConfig";
 
 
 
@@ -27,6 +29,11 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
     const userToken = useSelector((state: State) => state.persistent.userToken);
 
     const [sideMenuOpen, setSideMenuOpen ] = useState<boolean>(false);
+
+    const [newUserToken, setNewUserToken] = useState<string>("");
+
+    const dispatch = useDispatch();
+
 
 
     const menuPan = useRef(new Animated.Value(0)).current;
@@ -88,6 +95,10 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
                     <TouchableOpacity onPress={() => navigation.navigate("CreateEventScreen")}>
                         <Text>Go to the create event page</Text>
                     </TouchableOpacity>
+                    
+                    <TextInput value={newUserToken} onChangeText={(value) => setNewUserToken(value)}></TextInput>
+                    <Text onPress={() => dispatch<Action>({type:"setUserToken", payload:{value:newUserToken}})}>Set the usertoken</Text>
+                    <Text onPress={() => client.clearStore()}>Clear the apollo client cache</Text>
                 </View>
 
             </SideMenu>

@@ -59,7 +59,6 @@ export async function createContext(initialContext: YogaInitialContext): Promise
             cacheKeyFn: ({userId, eventId}) => `${userId}_${eventId}`
         }*/),
         userProfilePictureLoader: new DataLoader(ids => getPfpStoreFilenames(client, ids)),
-        // currentUserId: await authenticateUser(initialContext.request),
         userContext: new UserContext(client, initialContext),
         client: client
     }

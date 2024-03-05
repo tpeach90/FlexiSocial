@@ -16,3 +16,11 @@ export const LOGIN = gql`
         }
     }
 `
+
+export const CREATE_EVENT = gql`
+    mutation CreateEvent($name: String!, $description: String!, $latitude: Float!, $longitude:Float!, $location: String!, $time: String!, $duration: Int!, $capacity: Int) {
+        createEvent(name: $name, description: $description, latitude: $latitude, longitude: $longitude, location: $location, time: $time, duration: $duration, capacity: $capacity) {
+            eventId
+        }
+    }
+`

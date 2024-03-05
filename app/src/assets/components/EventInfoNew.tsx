@@ -14,6 +14,7 @@ import { GET_EVENT } from "../../graphql/queries";
 import { useNavigation } from "@react-navigation/native";
 import { AppStackParamList } from "../../navigation/paramLists";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import moment from "moment";
 
 
 interface EventInfoNewProps {
@@ -29,17 +30,26 @@ function toDurationString(seconds?: number): string | undefined {
 
     if (!seconds) return undefined;
 
-    const hours = Math.floor(seconds / (60 * 60));
-    const minutes = Math.floor((seconds % (60 * 60)) / 60);
+    const duration = moment.duration(seconds, "seconds");
 
-    var durationString = "";
-    durationString += hours + " hour"
-    if (hours != 1) durationString += "s"
-    if (minutes > 0) {
-        durationString += ", " + minutes + " minute"
-        if (minutes != 1) durationString += "s"
+    const hours = duration.get("hours");
+    const minutes = duration.get("minutes");
+
+    const stringParts = [];
+
+    if (hours != 0) {
+        var hourString = hours + " hour";
+        if (hours != 1) hourString += "s";
+        stringParts.push(hourString);
     }
-    return durationString;
+
+    if (minutes != 0) {
+        var minuteString = minutes + " minute";
+        if (minutes != 1) minuteString += "s";
+        stringParts.push(minuteString);
+    }
+
+    return stringParts.join(", ");
 }
 
 

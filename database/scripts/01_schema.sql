@@ -50,8 +50,8 @@ CREATE TABLE Events (
     Location varchar(255) NOT NULL,
     Time timestamp with time zone NOT NULL,
     CreatedTimestamp timestamp NOT NULL DEFAULT current_timestamp,
-    Duration interval NOT NULL,
-    Capacity numeric CHECK (Capacity > 0),
+    Duration interval NOT NULL, -- CHECK (Duration BETWEEN '0'::interval and '24 hours'::interval),
+    Capacity numeric, -- CHECK (Capacity > 0),
 
     FOREIGN KEY (CreatorId) REFERENCES Users(Id) ON DELETE SET NULL
 );

@@ -7,6 +7,7 @@ import { zip } from "underscore";
 import * as EmailValidator from 'email-validator';
 import { accountWithEmailExists } from "./queries";
 import { PoolClient } from "pg";
+import { GraphQLGUID } from "graphql-scalars";
 
 
 
@@ -76,4 +77,127 @@ export async function createProfilePictureUploadLink(client: PoolClient, userId:
     const [Link, ExpiryTimestamp] = result.rows[0] as [string, number];
 
     return {link: Link, expiryTimestamp: ExpiryTimestamp}
+}
+/**
+ * Insert a new event into the database.
+ * Assumes that the creatorId already exists.
+ * @param client 
+ * @param event 
+ */
+export async function createEvent(client: PoolClient, event:{
+    creatorId: number,
+    name: string,
+    description: string,
+    point:{
+        latitude:number,
+        longitude:number
+    },
+    location:string,
+    timeString:string,
+    duration:number,
+    capacity?:number
+}) {
+
+    if (event.name.length < 1 || event.name.length > 255) {
+        throw new GraphQLError("Event name must be between 1 and 255 characters (inclusive).")
+    }
+    if (event.description.length > 8000) {
+        throw new GraphQLError("Event description must be at most 8000 characters.")
+    }
+    if (event.point.latitude < -90 || event.point.latitude > 90) {
+        throw new GraphQLError("Event latitude must be in range -90 to 90 degrees (inclusive).")
+    }
+    if (event.point.longitude < -180 || event.point.longitude > 180) {
+        throw new GraphQLError("Event longitude must be in range -180 to 180 degrees (inclusive).")
+    }
+    if (event.location.length < 1 || event.location.length > 255) {
+        throw new GraphQLError("Event location must be between 1 and 255 characters (inclusive).")
+    }
+    const now = new Date(Date.now());
+    const timeMs = Date.parse(event.timeString)
+    if (isNaN(timeMs)) {
+        throw new GraphQLError("Event time not in the Date Time String Format")
+    }
+    const time = new Date(timeMs);
+    if (time < now) {
+        throw new GraphQLError("Event cannot be in the past. (The current time is " + now.toISOString() + ")")
+    }
+    if (time.valueOf() > now.valueOf() + 31536000000) {
+        throw new GraphQLError("Event cannot be more than a year in the future.")
+    }
+    if (event.duration % 1 != 0) {
+        throw new GraphQLError("Event duration must be a whole number of minutes")
+    }
+    if (event.duration < 1) {
+        throw new GraphQLError("Event duration must be positive.")
+    }
+    if (event.duration > 24*60) {
+        throw new GraphQLError("Event duration must not exceed 1440 mins (24 hours).")
+    }
+    if (event.capacity !== undefined) {
+        if (event.capacity % 1 != 0) {
+            throw new GraphQLError("Event capacity must be a whole number")
+        }
+        if (event.capacity < 1) {
+            throw new GraphQLError("Event capacity must be positive")
+        }
+        if (event.capacity > 10000) {
+            throw new GraphQLError("Event capacity can't be more than 10000")
+        }
+    }
+
+    await client.query("BEGIN TRANSACTION")
+
+    try {
+        // create the event.
+        const update0 = event.capacity !== undefined ? `
+            INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration, Capacity)
+            VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5),4326), $6, $7, ($8 ||' minutes')::interval, $9)
+            RETURNING Id
+        ` : `
+            INSERT INTO Events(Name, Description, CreatorId, Point, Location, Time, Duration)
+            VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5),4326), $6, $7, ($8 ||' minutes')::interval)
+            RETURNING Id
+        `
+        const params0 = [
+            event.name,
+            event.description,
+            event.creatorId,
+            event.point.longitude,
+            event.point.latitude,
+            event.location,
+            time.toISOString(),
+            event.duration
+        ]
+        if (event.capacity !== undefined) {
+            params0.push(event.capacity)
+        }
+
+        const result0 = await client.query({ rowMode: "array", text: update0 }, params0);
+
+        if (!result0.rows || result0.rows.length != 1) {
+            console.error("Error for update: \n" + update0)
+            throw new Error("Internal server error")
+        }
+
+        const [eventId] = result0.rows[0] as [number];
+
+        // add the role "organizer" for the creator of this event
+        const update1 = `
+            INSERT INTO UserEventRoles(UserId, EventId, Role)
+            VALUES ($1, $2, 'organizer');
+        `;
+
+        const result1 = await client.query({ rowMode: "array", text: update1 }, [event.creatorId, eventId]);
+
+        await client.query("COMMIT");
+
+        return { eventId }
+
+    
+    } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+    } 
+
 }

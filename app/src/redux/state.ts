@@ -50,7 +50,7 @@ export type State = {
 
 // initial state
 export const initialPersistentState: StatePersistentSlice = {
-    userToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNmExOTY2NmMtY2ZjNi00YWJjLWI4Y2UtNmUyMmVmZDRjYWJhIiwiaWF0IjoxNzA3MjM4NTc4fQ.ulqPGkDmZbqFuogLvRgXIRLSlG0rxc2Udwq15Y79m8k", // todo remember to remove this. This is jamir ochoa's token
+    userToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNDQ4N2ViNWYtZDUyMC00NWUwLTg5MzUtMjE3ZDA2MDE2YmFhIiwiaWF0IjoxNzA5NjcwMjAyfQ.WMnzeaPzPUdlEgnypZBH6WQ5cVFukVDmdhmW-X8iDLI", // todo remember to remove this. This is jamir ochoa's token
     mapScreen: {
         toggles: {
             today: true,
@@ -61,7 +61,7 @@ export const initialPersistentState: StatePersistentSlice = {
     }
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "app",
+    screenStack: "debug",
     mapScreen: {
         markers:[],
         tilesLoaded:[],

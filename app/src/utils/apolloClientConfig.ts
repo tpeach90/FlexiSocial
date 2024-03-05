@@ -1,5 +1,6 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, from } from "@apollo/client";
 import { onError } from "@apollo/client/link/error";
+import { setContext } from '@apollo/client/link/context';
 import { State } from "../redux/state";
 import { backendURL } from "../config/config";
 
@@ -13,6 +14,17 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
         })
     }
 });
+
+const authLink = setContext((_, {headers}) => {
+    const state: State = store.getState();
+    const token = state.persistent.userToken;
+    return {
+        headers: {
+            ...headers,
+            authorization: token ? `Bearer ${token}` : "",
+        }
+    }
+})
 
 // add the authorization token to the header for graphql server
 const authMiddleware = new ApolloLink((operation, forward) => {
@@ -28,7 +40,8 @@ const authMiddleware = new ApolloLink((operation, forward) => {
 
 const link = from([
     errorLink,
-    authMiddleware,
+    // authMiddleware,
+    authLink,
     new HttpLink({ uri: backendURL })
 ]);
 

@@ -9,7 +9,7 @@ import { GraphQLError } from 'graphql';
 import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
-import { createProfilePictureUploadLink, createUser } from './sql/updates';
+import { createEvent, createProfilePictureUploadLink, createUser } from './sql/updates';
 
 // [] means list
 //  ! means non-nullable
@@ -179,8 +179,37 @@ export const schema = createSchema<GraphQLContext>({
                 return {link, expiryTimestamp}
                 
 
+            },
+
+            createEvent: async(_, {name, description, latitude, longitude, location, time, duration, capacity}, {userContext, client}) => {
+
+                const creatorId = await userContext.getId();
+                if (!creatorId) throw new GraphQLError("Not authorized")
+
+                const {eventId} = await createEvent(client, {
+                    creatorId: creatorId,
+                    name: name,
+                    description: description,
+                    point: {
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    location: location,
+                    timeString: time,
+                    duration: duration,
+                    capacity: capacity
+                })
+
+                return {eventId}
+
             }
+
+
         },
+
+        // MutationResult: {
+        //     success: true
+        // }
     }
 })
 

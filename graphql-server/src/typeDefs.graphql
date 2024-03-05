@@ -136,7 +136,8 @@ type ChatMessage {
 type Mutation {
     signup(email: String!, password: String!, displayName: String!): AuthPayload
     login(email: String!, password: String!): AuthPayload
-    uploadPfp: UploadPfpPayload!   
+    uploadPfp: UploadPfpPayload!
+    createEvent(name: String!, description: String!, latitude: Float!, longitude:Float!, location: String!, time: String!, duration: Int!, capacity: Int): CreateEventPayload!
 }
 
 type AuthPayload {
@@ -146,4 +147,12 @@ type AuthPayload {
 type UploadPfpPayload {
     link:String!
     expiryTimestamp: Timestamp!
+}
+
+type MutationResult {
+    success: Boolean!
+}
+
+type CreateEventPayload {
+    eventId: Int!
 }

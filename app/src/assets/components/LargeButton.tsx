@@ -4,13 +4,27 @@ import { colors, universalStyles } from "../../config/config"
 interface LargeButtonProps {
     onPress?: () => any,
     text: string,
-    style?:ViewStyle
+    style?:ViewStyle,
+    active?: boolean
 }
 
 export default function LargeButton(props: LargeButtonProps) {
 
+    props = {
+        active:true,
+        ...props
+    }
+
     return (
-        <TouchableOpacity style={[styles.button, props.style]} onPress={() => props.onPress?.()}>
+        <TouchableOpacity 
+            style={[
+                styles.button,
+                props.active? styles.enabled : styles.disabled,
+                props.style
+            ]}
+            onPress={() => props.onPress?.()}
+            disabled={!props.active}
+        >
             <Text style={styles.buttonText}>{props.text}</Text>
         </TouchableOpacity> 
     )
@@ -18,13 +32,18 @@ export default function LargeButton(props: LargeButtonProps) {
 
 const styles = StyleSheet.create({
     button: {
-        backgroundColor: colors.primary,
         minWidth: 250,
         width: "0%", // shrink as small as possible, obeying the minWidth constraint.
         padding: 5,
         borderRadius: 15,
         marginVertical: 5
 
+    },
+    enabled: {
+        backgroundColor: colors.primary,
+    },
+    disabled: {
+        backgroundColor:colors.gray
     },
     buttonText: {
         ...universalStyles.h2,

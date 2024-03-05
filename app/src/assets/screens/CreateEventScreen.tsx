@@ -1,30 +1,25 @@
 
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AppStackParamList, AuthStackParamList } from "../../navigation/paramLists";
-import { Alert, FetchResult, KeyboardAvoidingView, PermissionsAndroid, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { AppStackParamList, } from "../../navigation/paramLists";
+import { Alert, BackHandler, KeyboardAvoidingView, PermissionsAndroid, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, googleMapsStyle, universalStyles } from "../../config/config";
 import IconButton from "../components/IconButton";
-import { faBuilding, faCalendar, faCalendarDays, faChevronDown, faChevronLeft, faCircle, faCircleInfo, faClock, faL, faLocation, faLocationDot, faPen, faPerson } from "@fortawesome/free-solid-svg-icons";
+import { faBuilding, faCalendarDays, faChevronDown, faChevronLeft, faCircleInfo, faClock, faLocationDot, faPen, faPerson } from "@fortawesome/free-solid-svg-icons";
 import { Shadow } from "react-native-shadow-2";
-import { OutlinedTextField } from "rn-material-ui-textfield";
-import { useCallback, useMemo, useRef, useState, version } from "react";
-import CheckBox from "@react-native-community/checkbox";
+import { useCallback, useMemo, useState } from "react";
 import EntryBox from "../components/EntryBox";
-import * as EmailValidator from 'email-validator';
 import LoadingModal from "../components/LoadingModal";
-import { useMutation } from "@apollo/client";
-import { SIGN_UP } from "../../graphql/mutations";
-import { useDispatch } from "react-redux";
-import { Action } from "../../redux/reducer";
-import { client } from "../../utils/apolloClientConfig";
-import MapView from "react-native-maps";
-import { isConstValueNode } from "graphql";
+import MapView, { LatLng, Marker } from "react-native-maps";
 import LargeButton from "../components/LargeButton"
 import DateTimePicker from '@react-native-community/datetimepicker';
 import RNPickerSelect from 'react-native-picker-select';
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import SetMarkerModal from "../components/SetMarkerModal";
+import { useMutation } from "@apollo/client";
+import { CREATE_EVENT } from "../../graphql/mutations";
+import { useFocusEffect } from "@react-navigation/native";
 
 
 
@@ -38,13 +33,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
     // visiblility of modals.
     const [datePickerShown, setDatePickerShown] = useState(false);
     const [timePickerShown, setTimePickerShown] = useState(false);
-
-    // refs for entry boxes in the forms
-    const eventTitleRef = useRef<TextInput>(null);
+    const [markerModalShown, setMarkerModalShown] = useState(false);
 
     // values of the form
     const [title, setTitle] = useState("");
-    const [marker, setMarker] = useState<{lat:number, lon:number}>();
+    const [marker, setMarker] = useState<LatLng>();
     const [venue, setVenue] = useState("");
     const [dateTime, setDateTime] = useState(new Date(Date.now() + 3600000));
     const [duration, setDuration] = useState<number|null>(null);
@@ -54,13 +47,26 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
     // whether errors display regardless of the user having not interacted with the box yet
     const [forceDisplayErrors, setForceDisplayErrors] = useState(false);
 
+    // mutation to submit the event
+    const [createEventMutation, { data, loading, error }] = useMutation(CREATE_EVENT);
 
+    // interrupt presses to the back key on android.
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                backOrCancel();
+                // prevent the back event from bubbling
+                return true;
+            }
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+            return () => subscription.remove();
+        }, [])
+    );
 
-
-    function setMarkerLocation() {
-        // open a new screen to set the event marker.
-        console.log("Set marker location")
+    function backOrCancel() {
+        Alert.alert("You have unsaved changes", "Quit creating event?", [{text:"Cancel"},{text:"Quit", onPress:() => navigation.goBack()}])
     }
+
 
     const onDateTimeChange = useCallback((date:Date) => {
         setDateTime(date);
@@ -79,6 +85,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
 
     const titleValidMessage = useMemo(() => validateEventTitle(title), [title]);
 
+    const validateMarker = useCallback((marker: LatLng | undefined) => {
+        if (!marker) {
+            return "Required"
+        }
+    }, [])
+
+    const markerValidMessage = useMemo(() => validateMarker(marker), [marker]);
+
     const validateVenueName = useCallback((venueName: string) => {
         if (venueName.length == 0) {
             return "Required"
@@ -91,7 +105,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
     const venueValidMessage = useMemo(() => validateVenueName(venue), [venue])
 
     const validateDateTime = useCallback((dateTime: Date) => {
-        if (dateTime < new Date(Date.now())) {
+        const now = new Date(Date.now());
+        if (dateTime < now) {
             return "Event can't be in the past"
         }
         if (dateTime > new Date(Date.now() + 31536000000)) {
@@ -99,7 +114,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
     }, []);
 
-    const dateTimeValidMessage = useMemo(() => validateDateTime(dateTime), [dateTime]);
+    // don't memoize this because validity could change depending on the current time
+    const dateTimeValidMessage = validateDateTime(dateTime);
 
     const validateCapacity = useCallback((capacity: string) => {
         if (capacity === undefined) {
@@ -155,23 +171,49 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
 
     async function submit() {
 
-        if (!validToSubmit) {
-            const badFields = [];
-            titleValidMessage && badFields.push("Event title");
-            venueValidMessage && badFields.push("Name of venue/location");
-            dateTimeValidMessage && badFields.push("Date and time");
-            durationValidMessage && badFields.push("Approx duration");
-            capacityValidMessage && badFields.push("Capacity");
-            descriptionValidMessage && badFields.push("Description");
+        const badFields = [];
+        validateEventTitle(title) && badFields.push("Event title");
+        validateMarker(marker) && badFields.push("Marker")
+        validateVenueName(venue) && badFields.push("Name of venue/location");
+        validateDateTime(dateTime) && badFields.push("Date and time");
+        validateDuration(duration) && badFields.push("Approx duration");
+        validateCapacity(capacity) && badFields.push("Capacity");
+        validateDescription(description) && badFields.push("Description");
+        if (badFields.length > 0) {
             setForceDisplayErrors(true);
-            const lol = badFields.join(", ")
-            // const errorString = "The following fields are not complete or not valid: " + badFields.join(", ");
-            const errorString = "The following fields are not complete or not valid: " + lol;
+            const errorString = "The following fields are not complete or not valid: " + badFields.join(", ");
             Alert.alert("Form not complete", errorString);
             return;
         }
 
-        console.log("Create event");
+        setSubmitting(true);
+
+        await createEventMutation({variables: {
+            name:title,
+            description: description,
+            latitude: marker?.latitude,
+            longitude: marker?.longitude,
+            location: venue,
+            time: dateTime.toISOString(),
+            duration: duration,
+            capacity: parseInt(capacity)
+        }})
+            .then(mutationResult => {
+                if (mutationResult.errors) {
+                    Alert.alert(mutationResult.errors.map(e => e.message).join("\n"))
+                    setSubmitting(false);
+                    return;
+                }
+                if (mutationResult.data) {
+                    // successfully created the event.
+                    navigation.goBack()
+                }
+            })
+            .catch(mutationError => {
+                Alert.alert(mutationError.message);
+                setSubmitting(false);
+                return;
+            })
 
     }
 
@@ -179,6 +221,13 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         <>
             {/* prevent the user doing anything if submitting. */}
             <LoadingModal visible={submitting} />
+
+            <SetMarkerModal
+                location={marker}
+                onChangeLocation={setMarker}
+                visible={markerModalShown}
+                onChangeVisibility={setMarkerModalShown}
+            />
 
             <StatusBar
                 // make the status bar transparent on android
@@ -201,7 +250,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                             icon={faChevronLeft}
                             style={{ backgroundColor: colors.white }}
                             iconStyle={{ color: colors.primary }}
-                            onPress={navigation.goBack}
+                            onPress={backOrCancel}
                         />
                     </View>
                     <View style={{ alignItems: "center" }}>
@@ -228,20 +277,12 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                             value={title}
                             onChangeValue={setTitle}
                             style={styles.entryBox}
-                            ref={eventTitleRef}
                             valid={!titleValidMessage}
                             message={titleValidMessage}
                             forceDisplayErrors={forceDisplayErrors}
                             textInputProps={{
-                                onSubmitEditing: () => {
-                                    // passwordRef.current?.focus();
-                                },
-                                onChangeText(text) {
-                                    // setEmail(text);
-                                    // setEmailValid(text == "" || EmailValidator.validate(text));
-                                },
-                                blurOnSubmit: false,
-                                returnKeyType: "next",
+                                blurOnSubmit: true,
+                                returnKeyType: "done",
                                 spellCheck: false,
                                 editable: !submitting,
                             }}
@@ -251,10 +292,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                         <EntryBox
                             icon={faLocationDot}
                             title="Marker"
-                            // valid={true}
-
+                            valid={!markerValidMessage}
+                            message={markerValidMessage}
                             style={styles.entryBox}
-                            // ref={eventTitleRef}
                             display="none"
                             forceDisplayErrors={forceDisplayErrors}
                         >
@@ -267,10 +307,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                             >
                                 <TouchableOpacity 
                                     style={styles.mapWindow}
-                                    onPress={setMarkerLocation}
+                                    onPress={() => setMarkerModalShown(true)}
                                 >
                                     <MapView
-                                        // ref={mapRef}
                                         style={StyleSheet.absoluteFillObject}
                                         customMapStyle={googleMapsStyle}
                                         onMapReady={() => {
@@ -278,17 +317,21 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                                                 PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
                                             )
                                         }}
-                                        // TODO region should be set around the marker::
-                                        // region={{latitude: 0, longitude: 0, latitudeDelta: 1, longitudeDelta: 1}}
+                                        region={marker && { ...marker, latitudeDelta: 0.003, longitudeDelta: 0.003 }}
                                     >
-                                        {/* TODO marker goes here, if it has been set. */}
+                                        {marker &&
+                                            <Marker
+                                                coordinate={marker}
+                                                pinColor={colors.primary}
+                                            />
+                                        }
                                     </MapView>
 
                                     {/* prevent the user from panning the map here - put a transparent view above it */}
                                     <View style={{ ...StyleSheet.absoluteFillObject, flexDirection: "column", pointerEvents:"box-only"}} >
                                         <LargeButton 
                                             text="Tap to set marker location" 
-                                            onPress={setMarkerLocation} 
+                                            onPress={() => setMarkerModalShown(true)}
                                             style={{alignSelf:"center", marginTop:20}}
                                         />
                                     </View>
@@ -311,15 +354,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                             style={styles.entryBox}
                             forceDisplayErrors={forceDisplayErrors}
                             textInputProps={{
-                                onSubmitEditing: () => {
-                                    // passwordRef.current?.focus();
-                                },
-                                onChangeText(text) {
-                                    // setEmail(text);
-                                    // setEmailValid(text == "" || EmailValidator.validate(text));
-                                },
-                                blurOnSubmit: false,
-                                returnKeyType: "next",
+                                blurOnSubmit: true,
+                                returnKeyType: "done",
                                 spellCheck: false,
                                 editable: !submitting
                             }}
@@ -427,15 +463,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                                 style={[styles.entryBox, { flex: 1, marginLeft:10}]}
                                 forceDisplayErrors={forceDisplayErrors}
                                 textInputProps={{
-                                    onSubmitEditing: () => {
-                                        // passwordRef.current?.focus();
-                                    },
-                                    onChangeText(text) {
-                                        // setEmail(text);
-                                        // setEmailValid(text == "" || EmailValidator.validate(text));
-                                    },
-                                    blurOnSubmit: false,
-                                    returnKeyType: "next",
+                                    blurOnSubmit: true,
+                                    returnKeyType: "done",
                                     spellCheck: false,
                                     editable: !submitting,
                                     inputMode: "numeric"
@@ -459,7 +488,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                             }}
                             textInputProps={{
                                 blurOnSubmit: true,
-                                returnKeyType: "done",
+                                returnKeyType: "none",
                                 spellCheck: true,
                                 editable: !submitting,
                                 multiline: true,
