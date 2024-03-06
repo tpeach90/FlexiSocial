@@ -2,7 +2,7 @@
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList, } from "../../navigation/paramLists";
-import { Alert, BackHandler, KeyboardAvoidingView, PermissionsAndroid, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, BackHandler, KeyboardAvoidingView, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, googleMapsStyle, universalStyles } from "../../config/config";
 import IconButton from "../components/IconButton";
@@ -20,35 +20,56 @@ import SetMarkerModal from "../components/SetMarkerModal";
 import { useMutation } from "@apollo/client";
 import { CREATE_EVENT } from "../../graphql/mutations";
 import { useFocusEffect } from "@react-navigation/native";
+import { Controller, useForm } from "react-hook-form";
 
 
 
 type CreateEventScreenProps = NativeStackScreenProps<AppStackParamList, "CreateEventScreen">;
 
+
+type FormValues = {
+    title: string,
+    marker?: LatLng,
+    venue: string,
+    dateTime: Date,
+    duration:number|null,
+    capacity:string,
+    description:string,
+}
+
+const defaultValues : FormValues = {
+    title: "",
+    marker: undefined,
+    venue: "",
+    dateTime: new Date(Date.now() + 3600000),
+    duration: null,
+    capacity: "",
+    description: ""
+}
+
+const fieldNames: Record<keyof FormValues, string> = {
+    title: "Event title",
+    marker: "Marker",
+    venue: "Name of venue/location",
+    dateTime: "Date and time",
+    duration: "Approx duration",
+    capacity: "Capacity",
+    description: "Description"
+}
+
 export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
 
-    // prevent the user from changing data in forms if set
-    const [submitting, setSubmitting] = useState<boolean>(false);
 
     // visiblility of modals.
     const [datePickerShown, setDatePickerShown] = useState(false);
     const [timePickerShown, setTimePickerShown] = useState(false);
     const [markerModalShown, setMarkerModalShown] = useState(false);
 
-    // values of the form
-    const [title, setTitle] = useState("");
-    const [marker, setMarker] = useState<LatLng>();
-    const [venue, setVenue] = useState("");
-    const [dateTime, setDateTime] = useState(new Date(Date.now() + 3600000));
-    const [duration, setDuration] = useState<number|null>(null);
-    const [capacity, setCapacity] = useState<string>("");
-    const [description, setDescription] = useState<string>("");
+    // the form.
+    const {control, handleSubmit, formState:{isValid, isDirty, isSubmitting}} = useForm<FormValues>({mode:"all", defaultValues});
 
-    // whether errors display regardless of the user having not interacted with the box yet
-    const [forceDisplayErrors, setForceDisplayErrors] = useState(false);
-
-    // mutation to submit the event
-    const [createEventMutation, { data, loading, error }] = useMutation(CREATE_EVENT);
+    // mutation to submit the new event
+    const [createEventMutation, {}] = useMutation(CREATE_EVENT);
 
     // interrupt presses to the back key on android.
     useFocusEffect(
@@ -64,14 +85,13 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
     );
 
     function backOrCancel() {
-        Alert.alert("You have unsaved changes", "Quit creating event?", [{text:"Cancel"},{text:"Quit", onPress:() => navigation.goBack()}])
+        if(isDirty) {
+            Alert.alert("You have unsaved changes", "Quit creating event?", [{ text: "Cancel" }, { text: "Quit", onPress: () => navigation.goBack() }])
+        } else {
+            navigation.goBack();
+        }
     }
 
-
-    const onDateTimeChange = useCallback((date:Date) => {
-        setDateTime(date);
-        console.log("datetime set to " + date.toISOString())
-    }, []);
 
 
     const validateEventTitle = useCallback((title: string) => {
@@ -83,15 +103,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
     }, []);
 
-    const titleValidMessage = useMemo(() => validateEventTitle(title), [title]);
-
     const validateMarker = useCallback((marker: LatLng | undefined) => {
         if (!marker) {
             return "Required"
         }
     }, [])
-
-    const markerValidMessage = useMemo(() => validateMarker(marker), [marker]);
 
     const validateVenueName = useCallback((venueName: string) => {
         if (venueName.length == 0) {
@@ -102,8 +118,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
     }, []);
 
-    const venueValidMessage = useMemo(() => validateVenueName(venue), [venue])
-
     const validateDateTime = useCallback((dateTime: Date) => {
         const now = new Date(Date.now());
         if (dateTime < now) {
@@ -113,9 +127,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
             return "Event can't be more than a year in the future"
         }
     }, []);
-
-    // don't memoize this because validity could change depending on the current time
-    const dateTimeValidMessage = validateDateTime(dateTime);
 
     const validateCapacity = useCallback((capacity: string) => {
         if (capacity === undefined) {
@@ -139,9 +150,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
     }, []);
 
-    const capacityValidMessage = useMemo(() => validateCapacity(capacity), [capacity]);
-
-
     const validateDuration = useCallback((duration:number|null) => {
         if (duration === null) {
             return "Required"
@@ -157,77 +165,70 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
     }, [])
 
-    const durationValidMessage = useMemo(() => validateDuration(duration), [duration]);
-
     const validateDescription = useCallback((description:string) => {
         if (description.length > 8000) {
             return "8000 characters maximum"
         }
     }, [])
 
-    const descriptionValidMessage = useMemo(() => validateDescription(description), [description]);
+  
+    const onSubmit = handleSubmit(async (data, event) => {
 
-    const validToSubmit = !titleValidMessage && !venueValidMessage && !dateTimeValidMessage && !durationValidMessage && !capacityValidMessage && !descriptionValidMessage;
+        // form is validated when the submit button is pressed, as well as when a field is changed
+        // so we can assume here that the data entered is valid.
 
-    async function submit() {
+        let result;
 
-        const badFields = [];
-        validateEventTitle(title) && badFields.push("Event title");
-        validateMarker(marker) && badFields.push("Marker")
-        validateVenueName(venue) && badFields.push("Name of venue/location");
-        validateDateTime(dateTime) && badFields.push("Date and time");
-        validateDuration(duration) && badFields.push("Approx duration");
-        validateCapacity(capacity) && badFields.push("Capacity");
-        validateDescription(description) && badFields.push("Description");
-        if (badFields.length > 0) {
-            setForceDisplayErrors(true);
-            const errorString = "The following fields are not complete or not valid: " + badFields.join(", ");
-            Alert.alert("Form not complete", errorString);
+        try {
+            result = await createEventMutation({
+                variables: {
+                    name: data.title,
+                    description: data.description,
+                    latitude: data.marker?.latitude,
+                    longitude: data.marker?.longitude,
+                    location: data.venue,
+                    time: data.dateTime.toISOString(),
+                    duration: data.duration,
+                    capacity: parseInt(data.capacity)
+                }
+            });
+        
+        } catch (e) {
+            if (e instanceof Error)
+                Alert.alert(e.message);
             return;
         }
 
-        setSubmitting(true);
+        if (result.errors) {
+            Alert.alert(result.errors.map(e => e.message).join("\n"))
+            return;
+        }
+        if (result.data) {
+            // successfully created the event.
+            navigation.goBack()
+        }
 
-        await createEventMutation({variables: {
-            name:title,
-            description: description,
-            latitude: marker?.latitude,
-            longitude: marker?.longitude,
-            location: venue,
-            time: dateTime.toISOString(),
-            duration: duration,
-            capacity: parseInt(capacity)
-        }})
-            .then(mutationResult => {
-                if (mutationResult.errors) {
-                    Alert.alert(mutationResult.errors.map(e => e.message).join("\n"))
-                    setSubmitting(false);
-                    return;
-                }
-                if (mutationResult.data) {
-                    // successfully created the event.
-                    navigation.goBack()
-                }
-            })
-            .catch(mutationError => {
-                Alert.alert(mutationError.message);
-                setSubmitting(false);
-                return;
-            })
 
-    }
+
+    }, (errors, event) => {
+
+        // in case of an invalid form, compile a list of errors for the user.
+        const errorList = [];
+        for (const field in errors) {
+            if (fieldNames.hasOwnProperty(field)) {
+                // @ts-expect-error
+                errorList.push(fieldNames[field] + ": " + errors[field].message + ".")
+            }
+        }
+        Alert.alert("Form not complete", "The following fields have errors:\n" + errorList.join("\n"))
+    })
+
 
     return (
         <>
             {/* prevent the user doing anything if submitting. */}
-            <LoadingModal visible={submitting} />
+            <LoadingModal visible={isSubmitting} />
 
-            <SetMarkerModal
-                location={marker}
-                onChangeLocation={setMarker}
-                visible={markerModalShown}
-                onChangeVisibility={setMarkerModalShown}
-            />
 
             <StatusBar
                 // make the status bar transparent on android
@@ -271,239 +272,317 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                     >
 
                         {/* =========================== Event title entry box =========================== */}
-                        <EntryBox
-                            icon={faPen}
-                            title="Event title"
-                            value={title}
-                            onChangeValue={setTitle}
-                            style={styles.entryBox}
-                            valid={!titleValidMessage}
-                            message={titleValidMessage}
-                            forceDisplayErrors={forceDisplayErrors}
-                            textInputProps={{
-                                blurOnSubmit: true,
-                                returnKeyType: "done",
-                                spellCheck: false,
-                                editable: !submitting,
+                        <Controller
+                            name="title"
+                            control={control}
+                            render={({field: {onChange, value, onBlur}, fieldState:{invalid, error}}) => (
+                                <EntryBox
+                                    icon={faPen}
+                                    title={fieldNames.title}
+                                    value={value}
+                                    onChangeValue={onChange}
+                                    style={styles.entryBox}
+                                    valid={!invalid}
+                                    message={error?.message}
+                                    textInputProps={{
+                                        blurOnSubmit: true,
+                                        returnKeyType: "done",
+                                        spellCheck: false,
+                                        editable: !isSubmitting,
+                                        onBlur:onBlur
+                                    }}
+                                />
+                            )}
+                            rules={{
+                                validate: (value) => validateEventTitle(value) || true
                             }}
                         />
 
+
+
                         {/* =========================== Marker entry box =========================== */}
-                        <EntryBox
-                            icon={faLocationDot}
-                            title="Marker"
-                            valid={!markerValidMessage}
-                            message={markerValidMessage}
-                            style={styles.entryBox}
-                            display="none"
-                            forceDisplayErrors={forceDisplayErrors}
-                        >
-                            <Shadow
-                                style={[{ width: "100%" }]}
-                                offset={[0, 2]}
-                                distance={3}
-                                startColor={"#CCC"}
-                                endColor={colors.white}
-                            >
-                                <TouchableOpacity 
-                                    style={styles.mapWindow}
-                                    onPress={() => setMarkerModalShown(true)}
+                        <Controller
+                            name="marker"
+                            control={control}
+                            render={({ field: { onChange, value:marker, onBlur }, fieldState: { invalid, error} }) => <>
+
+                                <SetMarkerModal
+                                    location={marker}
+                                    onChangeLocation={onChange}
+                                    visible={markerModalShown}
+                                    onChangeVisibility={setMarkerModalShown}
+                                />
+
+                                <EntryBox
+                                    icon={faLocationDot}
+                                    title={fieldNames.marker}
+                                    valid={!invalid}
+                                    message={error?.message}
+                                    style={styles.entryBox}
+                                    display="none"
                                 >
-                                    <MapView
-                                        style={StyleSheet.absoluteFillObject}
-                                        customMapStyle={googleMapsStyle}
-                                        onMapReady={() => {
-                                            PermissionsAndroid.request(
-                                                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                                            )
-                                        }}
-                                        region={marker && { ...marker, latitudeDelta: 0.003, longitudeDelta: 0.003 }}
+                                    <Shadow
+                                        style={[{ width: "100%" }]}
+                                        offset={[0, 2]}
+                                        distance={3}
+                                        startColor={"#CCC"}
+                                        endColor={colors.white}
                                     >
-                                        {marker &&
-                                            <Marker
-                                                coordinate={marker}
-                                                pinColor={colors.primary}
-                                            />
-                                        }
-                                    </MapView>
-
-                                    {/* prevent the user from panning the map here - put a transparent view above it */}
-                                    <View style={{ ...StyleSheet.absoluteFillObject, flexDirection: "column", pointerEvents:"box-only"}} >
-                                        <LargeButton 
-                                            text="Tap to set marker location" 
+                                        <TouchableOpacity
+                                            style={styles.mapWindow}
                                             onPress={() => setMarkerModalShown(true)}
-                                            style={{alignSelf:"center", marginTop:20}}
-                                        />
-                                    </View>
+                                        >
+                                            <MapView
+                                                style={StyleSheet.absoluteFillObject}
+                                                customMapStyle={googleMapsStyle}
+                                                onMapReady={() => {
+                                                    PermissionsAndroid.request(
+                                                        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                                                    )
+                                                }}
+                                                region={marker && { ...marker, latitudeDelta: 0.003, longitudeDelta: 0.003 }}
+                                            >
+                                                {marker &&
+                                                    <Marker
+                                                        coordinate={marker}
+                                                        pinColor={colors.primary}
+                                                    />
+                                                }
+                                            </MapView>
 
-                                </TouchableOpacity>
-                               
-                            </Shadow>
+                                            {/* prevent the user from panning the map here - put a transparent view above it */}
+                                            <View style={{ ...StyleSheet.absoluteFillObject, flexDirection: "column", pointerEvents: "box-only" }} >
+                                                <LargeButton
+                                                    text="Tap to set marker location"
+                                                    onPress={() => setMarkerModalShown(true)}
+                                                    style={{ alignSelf: "center", marginTop: 20 }}
+                                                />
+                                            </View>
+
+                                        </TouchableOpacity>
+
+                                    </Shadow>
 
 
-                        </EntryBox>
+                                </EntryBox>
+                            </>}
+                            rules={{
+                                validate: (value) => validateMarker(value) || true
+                            }}
                         
+                        
+                        />
+
+
                         {/* =========================== Name of venue/location entry box =========================== */}
-                        <EntryBox
-                            icon={faBuilding}
-                            title="Name of venue/location"
-                            valid={!venueValidMessage}
-                            message={venueValidMessage}
-                            value={venue}
-                            onChangeValue={setVenue}
-                            style={styles.entryBox}
-                            forceDisplayErrors={forceDisplayErrors}
-                            textInputProps={{
-                                blurOnSubmit: true,
-                                returnKeyType: "done",
-                                spellCheck: false,
-                                editable: !submitting
+                        <Controller
+                            name="venue"
+                            control={control}
+                            render={({ field: { onChange, value, onBlur }, fieldState: { invalid, error } }) => (
+                                <EntryBox
+                                    icon={faBuilding}
+                                    title={fieldNames.venue}
+                                    valid={!invalid}
+                                    message={error?.message}
+                                    value={value}
+                                    onChangeValue={onChange}
+                                    style={styles.entryBox}
+                                    textInputProps={{
+                                        blurOnSubmit: true,
+                                        returnKeyType: "done",
+                                        spellCheck: false,
+                                        editable: !isSubmitting,
+                                        onBlur: onBlur
+                                    }}
+                                />
+                            )}
+                            rules={{
+                                validate: (value) => validateVenueName(value) || true
                             }}
                         />
 
                         {/* =========================== Date and time entry box =========================== */}
-                        <EntryBox
-                            icon={faCalendarDays}
-                            title="Date and time"
-                            valid={!dateTimeValidMessage}
-                            message={dateTimeValidMessage}
-                            style={styles.entryBox}
-                            display="box-only"
-                            forceDisplayErrors={forceDisplayErrors}
-                        >
-                            {/* display current date and time */}
-                            <Text style={universalStyles.p}>{dateTime.toLocaleDateString()}, {dateTime.toLocaleTimeString(undefined, {hour:"2-digit", minute:"2-digit"})}</Text>
+                        <Controller
+                            name="dateTime"
+                            control={control}
+                            render={({ field: { onChange, value: dateTime }, fieldState: { invalid, error } }) => (
+                                <EntryBox
+                                    icon={faCalendarDays}
+                                    title={fieldNames.dateTime}
+                                    valid={!invalid}
+                                    message={error?.message}
+                                    style={styles.entryBox}
+                                    display="box-only"
+                                >
+                                    {/* display current date and time */}
+                                    <Text style={universalStyles.p}>{dateTime.toLocaleDateString()}, {dateTime.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</Text>
 
-                            {/* date picker */}
-                            <LargeButton
-                                text="Tap to set date"
-                                onPress={() => setDatePickerShown(true)}
-                            />
-                            {datePickerShown &&
-                                <DateTimePicker
-                                    // testID="dateTimePicker"
-                                    value={dateTime}
-                                    mode={"date"}
-                                    onChange={(event, date) => {
-                                        setDatePickerShown(false);
-                                        date && onDateTimeChange(date);
-                                    }}                                
-                                />
-                            }
+                                    {/* date picker */}
+                                    <LargeButton
+                                        text="Tap to set date"
+                                        onPress={() => setDatePickerShown(true)}
+                                    />
+                                    {datePickerShown &&
+                                        <DateTimePicker
+                                            // testID="dateTimePicker"
+                                            value={dateTime}
+                                            mode={"date"}
+                                            onChange={(event, date) => {
+                                                setDatePickerShown(false);
+                                                date && onChange(date);
+                                            }}
+                                        />
+                                    }
 
-                            {/* time picker */}
-                            <LargeButton
-                                text="Tap to set time"
-                                onPress={() => setTimePickerShown(true)}
-                            />
-                            {timePickerShown &&
-                                <DateTimePicker
-                                    // testID="dateTimePicker"
-                                    value={dateTime}
-                                    mode={"time"}
-                                    is24Hour={true}
-                                    onChange={(event, date) => {
-                                        setTimePickerShown(false);
-                                        date && onDateTimeChange(date);
-                                    }}
-                                />
-                            }
+                                    {/* time picker */}
+                                    <LargeButton
+                                        text="Tap to set time"
+                                        onPress={() => setTimePickerShown(true)}
+                                    />
+                                    {timePickerShown &&
+                                        <DateTimePicker
+                                            // testID="dateTimePicker"
+                                            value={dateTime}
+                                            mode={"time"}
+                                            is24Hour={true}
+                                            onChange={(event, date) => {
+                                                setTimePickerShown(false);
+                                                date && onChange(date);
+                                            }}
+                                        />
+                                    }
 
-                        </EntryBox>
-
-                        {/* Duration and capacity. They both occupy 1 column. */}
-                        <View style={{flexDirection:"row", justifyContent:"space-evenly"}}>
-
-                            {/* =========================== Duration entry box =========================== */}
-                            <EntryBox
-                                icon={faClock}
-                                title="Approx duration"
-                                style={[styles.entryBox, {flex:1, marginRight: 10}]}
-                                forceDisplayErrors={forceDisplayErrors}
-                                display="box-only"
-                                message={durationValidMessage}
-                                valid={!durationValidMessage}
-                            >
-                                <RNPickerSelect
-                                    value={duration}
-                                    onValueChange={value => setDuration(value)}
-                                    style={{
-                                        inputAndroid: styles.dropdown,
-                                        inputIOS: styles.dropdown,
-                                        iconContainer: {
-                                            justifyContent: "center",
-                                            height:"100%"
-                                        }
-                                    }}
-                                    Icon={() => <FontAwesomeIcon icon={faChevronDown} style={styles.drowdownChevron}/>}
-                                    useNativeAndroidPickerStyle={false}
-                                    items={[
-                                        { label: '0:30', value: 30 },
-                                        { label: '1:00', value: 60 },
-                                        { label: '1:30', value: 90 },
-                                        { label: '2:00', value: 120 },
-                                        { label: '3:00', value: 180 },
-                                        { label: '4:00', value: 240 },
-                                        { label: '5:00', value: 300 },
-                                        
-                                    ]}
-                                />
-                            </EntryBox>
-
-                            {/* =========================== Capacity entry box =========================== */}
-                            <EntryBox
-                                icon={faPerson}
-                                title="Capacity"
-                                value={capacity}
-                                onChangeValue={setCapacity}
-                                // remove non numeric characters and leading zeros.
-                                coercer={value => value.replaceAll(/[^0-9]/g, "").replace(/^0*/, "")}
-                                valid={!capacityValidMessage}
-                                message={capacityValidMessage}
-                                style={[styles.entryBox, { flex: 1, marginLeft:10}]}
-                                forceDisplayErrors={forceDisplayErrors}
-                                textInputProps={{
-                                    blurOnSubmit: true,
-                                    returnKeyType: "done",
-                                    spellCheck: false,
-                                    editable: !submitting,
-                                    inputMode: "numeric"
-                                    // inputMode:
-                                }}
-                            />
-                        </View>
-
-                        {/* =========================== Description =========================== */}
-                        <EntryBox
-                            icon={faCircleInfo}
-                            title="Description"
-                            value={description}
-                            onChangeValue={setDescription}
-                            valid={!descriptionValidMessage}
-                            message={descriptionValidMessage}
-                            style={styles.entryBox}
-                            forceDisplayErrors={forceDisplayErrors}
-                            boxStyle={{
-                                minHeight:150,
-                            }}
-                            textInputProps={{
-                                blurOnSubmit: true,
-                                returnKeyType: "none",
-                                spellCheck: true,
-                                editable: !submitting,
-                                multiline: true,
-                                style:{flex:1},
-                                textAlignVertical:"top",
+                                </EntryBox>
+                            )}
+                            rules={{
+                                validate: (value) => validateDateTime(value) || true
                             }}
                         />
+
+
+                        {/* Duration and capacity. They both occupy 1 column. */}
+                        <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
+
+                            {/* =========================== Duration entry box =========================== */}
+                            <Controller
+                                name="duration"
+                                control={control}
+                                render={({ field: { onChange, value: duration }, fieldState: { invalid, error } }) => (
+                                    <EntryBox
+                                        icon={faClock}
+                                        title={fieldNames.duration}
+                                        style={[styles.entryBox, { flex: 1, marginRight: 10 }]}
+                                        display="box-only"
+                                        message={error?.message}
+                                        valid={!invalid}
+                                    >
+                                        <RNPickerSelect
+                                            value={duration}
+                                            onValueChange={onChange}
+                                            style={{
+                                                inputAndroid: styles.dropdown,
+                                                inputIOS: styles.dropdown,
+                                                iconContainer: {
+                                                    justifyContent: "center",
+                                                    height: "100%"
+                                                }
+                                            }}
+                                            Icon={() => <FontAwesomeIcon icon={faChevronDown} style={styles.drowdownChevron} />}
+                                            useNativeAndroidPickerStyle={false}
+                                            items={[
+                                                { label: '0:30', value: 30 },
+                                                { label: '1:00', value: 60 },
+                                                { label: '1:30', value: 90 },
+                                                { label: '2:00', value: 120 },
+                                                { label: '3:00', value: 180 },
+                                                { label: '4:00', value: 240 },
+                                                { label: '5:00', value: 300 },
+
+                                            ]}
+                                        />
+                                    </EntryBox>
+                            )}
+                                rules={{
+                                    validate: (value) => validateDuration(value) || true
+                                }}
+                            />
+
+                            
+
+                            {/* =========================== Capacity entry box =========================== */}
+                            <Controller
+                                name="capacity"
+                                control={control}
+                                render={({ field: { onChange, value: capacity, onBlur }, fieldState: { invalid, error } }) => (
+                                    <EntryBox
+                                        icon={faPerson}
+                                        title={fieldNames.capacity}
+                                        value={capacity}
+                                        onChangeValue={onChange}
+                                        // remove non numeric characters and leading zeros.
+                                        coercer={value => value.replaceAll(/[^0-9]/g, "").replace(/^0*/, "")}
+                                        valid={!invalid}
+                                        message={error?.message}
+                                        style={[styles.entryBox, { flex: 1, marginLeft: 10 }]}
+                                        textInputProps={{
+                                            blurOnSubmit: true,
+                                            returnKeyType: "done",
+                                            spellCheck: false,
+                                            editable: !isSubmitting,
+                                            inputMode: "numeric",
+                                            onBlur: onBlur
+                                        }}
+                                    />
+                                )}
+                                rules={{
+                                    validate: (value) => validateCapacity(value) || true
+                                }}
+                            />
+                            
+                        </View>
+                        
+                        {/* =========================== Description =========================== */}
+
+                        <Controller
+                            name="description"
+                            control={control}
+                            render={({ field: { onChange, value: description, onBlur }, fieldState: { invalid, error } }) => (
+                                <EntryBox
+                                    icon={faCircleInfo}
+                                    title={fieldNames.description}
+                                    value={description}
+                                    onChangeValue={onChange}
+                                    valid={!invalid}
+                                    message={error?.message}
+                                    style={styles.entryBox}
+                                    boxStyle={{
+                                        minHeight: 150,
+                                    }}
+                                    textInputProps={{
+                                        blurOnSubmit: true,
+                                        returnKeyType: "none",
+                                        spellCheck: true,
+                                        editable: !isSubmitting,
+                                        multiline: true,
+                                        style: { flex: 1 },
+                                        textAlignVertical: "top",
+                                        onBlur:onBlur
+                                    }}
+                                />
+                            )}
+                            rules={{
+                                validate: (value) => validateDescription(value) || true
+                            }}
+                        />
+ 
 
   
 
                         {/* =========================== Submit button =========================== */}
                         <TouchableOpacity
-                            onPress={submit}
+                            onPress={onSubmit}
                             style={[styles.buttonContainer]}
-                            disabled={submitting}
+                            disabled={isSubmitting}
                         >
                             <Shadow
                                 style={[{ width: "100%" }]}
@@ -512,8 +591,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                                 startColor={"#AAA"}
                                 endColor={colors.white}
                             >
-                                <View style={[styles.submitButton, validToSubmit ? undefined : { backgroundColor: colors.light_gray }]}>
-                                    <Text style={[styles.buttonFont, { fontSize: 20 }, validToSubmit ? undefined : { color: colors.gray }]}>Create event</Text>
+                                <View style={[styles.submitButton, isValid ? undefined : { backgroundColor: colors.light_gray }]}>
+                                    <Text style={[styles.buttonFont, { fontSize: 20 }, isValid ? undefined : { color: colors.gray }]}>Create event</Text>
                                 </View>
                             </Shadow>
                         </TouchableOpacity>
@@ -527,9 +606,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
 
 
         </>
-
-
-
     )
 
 
