@@ -6,7 +6,7 @@
  */
 import 'react-native-gesture-handler';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import AppNav from './src/navigation/AppNav';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Text } from 'react-native';
@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { persistor, store } from './src/utils/reduxConfig';
 import { client } from './src/utils/apolloClientConfig';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import LoadingModal from './src/assets/components/LoadingModal';
 
 
 function App(): JSX.Element {
@@ -24,11 +25,13 @@ function App(): JSX.Element {
   //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   // };
 
+ 
+
   return (
     <Provider store={store} >
       <ApolloProvider client={client}>
         <SafeAreaProvider>
-          <PersistGate persistor={persistor} loading={<Text>Loading</Text>}>
+          <PersistGate persistor={persistor} loading={<LoadingModal/>}>
             <GestureHandlerRootView style={{flex:1}}>
               <AppNav />
             </GestureHandlerRootView>

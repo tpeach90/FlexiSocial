@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
-import { Animated, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { Animated, BackHandler, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import { colors, googleMapsStyle } from "../../config/config";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +24,8 @@ import { Action } from "../../redux/reducer";
 import EventChatShort from "../components/EventChatShort";
 import SideMenu from "react-native-side-menu-updated";
 import { faDisplay } from "@fortawesome/free-solid-svg-icons";
+import MapScreenIconButtons from "../components/MapScreenIconButtons";
+import { useFocusEffect } from "@react-navigation/native";
 
 const menuWidth = 300;
 
@@ -37,7 +39,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
     // const toggles = useSelector((state: State) => state.persistent.mapScreen.toggles)
     const { markers, tilesLoaded } = useSelector((state: State) => state.nonPersistent.mapScreen);
     const eventInfoPanelStatus = useSelector((state: State) => state.nonPersistent.mapScreen.eventInfo);
-    const sideMenuActive = useSelector((state: State) => state.nonPersistent.mapScreen.sideMenuActive)
+    const sideMenuActive = useSelector((state: State) => state.nonPersistent.mapScreen.sideMenuActive);
+
+    const [region, setRegion] = useState<Region>();
 
     // bottom sheet stuff.
     const sheetRef = useRef<BottomSheetModal>(null);
@@ -60,15 +64,20 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
     const handleClosePress = useCallback(() => {
         dispatch<Action>({type: "setEventInfoPanelStatus", payload: {active: false}})
     }, []);
-    // // close the bottom sheet if back is pressed.
-    // doesn't work!!
-    // useEffect(() => {
-    //     navigation.addListener('beforeRemove', (e) => {
-    //         if (!eventInfoPanelStatus.active) {
-    //             sheetRef.current?.dismiss();
-    //             e.preventDefault();
-    //         }
-    // })}, []);
+
+    // close the bottom sheet when the back key is pressed on Android.
+    useFocusEffect(
+        useCallback(() => {
+            const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+                if (eventInfoPanelStatus.active) {
+                    sheetRef.current?.dismiss();
+                    return true; // don't bubble the event
+                }
+                return false; // bubble the event.
+            });
+            return () => subscription.remove();
+        }, [eventInfoPanelStatus.active])
+    );
 
     // open the bottom sheet if activated.
     useEffect(() => {
@@ -105,6 +114,12 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
         );
     }, [])
 
+    // get markers when the screen changes
+    useEffect(() => {
+        if (region)
+            getNewData(region);
+    }, [region])
+
 
     // add markers to the list when the queries complete.
     useEffect(() => {
@@ -124,6 +139,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
     // NOTE this is an awful way of doing this I think, because if the screen moves while a query is in progress then the previous one will be cancelled wasting server resources. Maybe fix this if there is a better way
     async function getNewData(region: Region) {
         
+        // prevent if too far out.
+        if (region.latitudeDelta > 1 || region.longitudeDelta > 1)
+            return;
 
         getMarkers({
             variables: {
@@ -171,7 +189,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
                                 PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
                             )
                         }}
-                        onRegionChangeComplete={getNewData}
+                        onRegionChangeComplete={setRegion}
                     // moveOnMarkerPress={false}
                     >
                         {markers.map((marker, i) =>
@@ -202,6 +220,14 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
                         style={[StyleSheet.absoluteFillObject]}
                     >
 
+                        <MapScreenIconButtons
+                            style={{
+                                position:"absolute",
+                                
+                                right:10,
+                                bottom:10
+                            }}
+                        />
 
 
                         {/* menu at the side of the screen

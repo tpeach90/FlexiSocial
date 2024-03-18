@@ -38,7 +38,8 @@ export type StateNonPersistentSlice = {
     },
     userScreen: {
         
-    }
+    },
+    isLoading:boolean
 }
 
 export type State = {
@@ -61,7 +62,7 @@ export const initialPersistentState: StatePersistentSlice = {
     }
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "debug",
+    screenStack: "app",
     mapScreen: {
         markers:[],
         tilesLoaded:[],
@@ -72,5 +73,6 @@ export const initialNonPersistentState: StateNonPersistentSlice = {
     },
     userScreen: {
         
-    }
+    },
+    isLoading:false
 }

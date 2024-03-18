@@ -31,6 +31,10 @@ export type Action = {
     }
 } |
 {
+    type: "clearMarkers",
+    payload?:any
+} |
+{
     type: "setEventInfoPanelStatus",
     payload: StateNonPersistentSlice["mapScreen"]["eventInfo"]
 } |
@@ -42,6 +46,10 @@ export type Action = {
 } |
 {
     type: "setMapScreenSideMenuActive",
+    payload: boolean
+} |
+{
+    type: "setLoading",
     payload: boolean
 }
 
@@ -119,7 +127,20 @@ function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersist
                         sideMenuActive: false
                     }
                 }
-   
+        case "clearMarkers": 
+            return {
+                ...state,
+                mapScreen: {
+                    ...state.mapScreen,
+                    markers: [],
+                    tilesLoaded: []
+                }
+            }
+        case "setLoading":
+            return {
+                ...state,
+                isLoading: action.payload
+            }
         
         default: return state;
     }
@@ -131,16 +152,6 @@ function nonPersistentReducer(state: StateNonPersistentSlice = initialNonPersist
  * @returns Updated persistent slice of the state
  */
 function persistentReducer(state: StatePersistentSlice = initialPersistentState, action: Action): StatePersistentSlice {
-
-    // // handle arrays - multiple actions done at once
-    // if (Array.isArray(action)) {
-    //     let newState = state;
-    //     for (const a of action) {
-    //         newState = persistentReducer(newState, a);
-    //     }
-    //     return newState;
-    // }
-
 
     switch (action.type) {
 

@@ -9,14 +9,20 @@ interface IconButtonProps {
     style?: ViewStyle | ViewStyle[],
     iconStyle?: FontAwesomeIconStyle,
     icon: IconDefinition,
+    iconSize?: number,
     onPress?: () => void
 }
 
 export default function IconButton(props: IconButtonProps) {
 
+    props = {
+        iconSize:16,
+        ...props
+    }
+
     return (
         <TouchableOpacity style={[styles.iconButton, props.style]} onPress={props.onPress}>
-            <FontAwesomeIcon icon={props.icon} style={[styles.iconButtonIcon, props.iconStyle]} />
+            <FontAwesomeIcon icon={props.icon} style={[styles.iconButtonIcon, props.iconStyle]} size={props.iconSize}/>
         </TouchableOpacity>
     )
 }

@@ -16,6 +16,7 @@ export const colors = {
     background: "#FFF",
     invalid_light: "#FFD8B4",
     invalid_dark: "#FF7A00",
+    notification: "#FF7E7E"
 }
 
 export const fonts = {

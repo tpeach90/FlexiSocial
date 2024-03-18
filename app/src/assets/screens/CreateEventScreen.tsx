@@ -21,6 +21,8 @@ import { useMutation } from "@apollo/client";
 import { CREATE_EVENT } from "../../graphql/mutations";
 import { useFocusEffect } from "@react-navigation/native";
 import { Controller, useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import { Action } from "../../redux/reducer";
 
 
 
@@ -59,6 +61,7 @@ const fieldNames: Record<keyof FormValues, string> = {
 
 export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
 
+    const dispatch = useDispatch();
 
     // visiblility of modals.
     const [datePickerShown, setDatePickerShown] = useState(false);
@@ -205,6 +208,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
         }
         if (result.data) {
             // successfully created the event.
+            // clear the event marker cache
+            dispatch<Action>({type:"clearMarkers"});
+
             navigation.goBack()
         }
 

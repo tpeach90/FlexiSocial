@@ -2,13 +2,22 @@
  * Menu that you can pull from the side of the screen.
  */
 
+import { useLazyQuery, useQuery } from "@apollo/client"
 import { faGear, faRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 import { TouchableOpacity } from "@gorhom/bottom-sheet"
-import { ScrollView, StyleSheet, Text, Touchable, View, ViewStyle } from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { useCallback } from "react"
+import { Alert, ScrollView, StyleSheet, Text, Touchable, View, ViewStyle } from "react-native"
 import LinearGradient from "react-native-linear-gradient"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useDispatch } from "react-redux"
 import { colors, universalStyles } from "../../config/config"
+import { GET_MY_ID } from "../../graphql/queries"
+import { AppStackParamList } from "../../navigation/paramLists"
+import { Action } from "../../redux/reducer"
+import { client } from "../../utils/apolloClientConfig"
 
 
 interface AppMenuProps {
@@ -16,6 +25,49 @@ interface AppMenuProps {
 }
 
 export default function AppMenu(props: AppMenuProps) {
+
+    const disaptch = useDispatch();
+
+    const [getMyId, {}] = useLazyQuery(GET_MY_ID);
+    const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+    const goToProfile = useCallback(async () => {
+
+        const {data, error} = await getMyId();
+
+        if (data) {
+            if (data?.me?.user?.id) {
+                navigation.navigate("UserScreen", { id: data.me.user.id })
+            }
+            else {
+                Alert.alert("You are not signed in.")
+            }
+            return;
+        }
+
+        // no data??
+        if (error) {
+            Alert.alert(error.message);
+        } else {
+            Alert.alert("An unexpected error occurred.")
+        }
+
+    }, []);
+
+
+    const signOut = useCallback(() => {
+
+        const onConfirm = () => {
+            disaptch<Action>({type:"setUserToken", payload: {value: null}});
+            disaptch<Action>({type: "setScreenStack", payload:{value: "auth"}})
+            client.clearStore();
+        }
+
+        Alert.alert("Sign out", "Are you sure you want to sign out?", [
+            {text:"Sign out", isPreferred:true, onPress:onConfirm},
+            {text:"Cancel"}
+        ])
+    }, []);
 
 
     return (
@@ -36,7 +88,7 @@ export default function AppMenu(props: AppMenuProps) {
                             {
                                 title: "My profile",
                                 icon: faUser,
-                                onPress: () => console.log("My profile")
+                                onPress: goToProfile
                             },
                             {
                                 title: "Account settings",
@@ -46,7 +98,7 @@ export default function AppMenu(props: AppMenuProps) {
                             {
                                 title: "Sign out",
                                 icon: faRightFromBracket,
-                                onPress: () => console.log("Sign out")
+                                onPress: signOut
                             }
 
                         ].map(({ title, icon, onPress }, i) =>

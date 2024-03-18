@@ -2,10 +2,16 @@ import { ActivityIndicator, Modal, StyleSheet, View } from "react-native";
 import { colors } from "../../config/config";
 
 interface LoadingModalProps {
-    visible: boolean
+    visible?: boolean
 }
 
 export default function LoadingModal(props: LoadingModalProps) {
+
+    // default values
+    props = {
+        visible:true,
+        ...props
+    }
 
     return (
         <Modal
