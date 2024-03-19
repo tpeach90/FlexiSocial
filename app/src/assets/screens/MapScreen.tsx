@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AppStackParamList} from "../../navigation/paramLists";
+import { AppStackParamList, AppTabNavigatorParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
 import { Animated, BackHandler, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
@@ -29,10 +29,9 @@ import { useFocusEffect } from "@react-navigation/native";
 
 const menuWidth = 300;
 
+type MapScreenProps = {}
 
-type MapScreenProps = NativeStackScreenProps<AppStackParamList, "MapScreen">;
-
-export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
+export default function MapScreen(props:MapScreenProps) {
 
     const insets = useSafeAreaInsets();
     const mapRef = useRef<MapView>(null);
@@ -190,7 +189,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({navigation, route}) => {
                             )
                         }}
                         onRegionChangeComplete={setRegion}
-                    // moveOnMarkerPress={false}
+                        toolbarEnabled={false}
                     >
                         {markers.map((marker, i) =>
                             <Marker

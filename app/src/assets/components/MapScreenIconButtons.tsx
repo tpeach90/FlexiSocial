@@ -28,7 +28,7 @@ export default function AppScreenIconButtons(props: AppScreenIconButtonsProps) {
                 <FontAwesomeIcon icon={faPlus} style={[styles.iconButtonIcon]} size={iconSize} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => console.log("view calendar")}>
+            {/* <TouchableOpacity onPress={() => console.log("view calendar")}>
 
                 <View style={styles.iconButton} >
                     <FontAwesomeIcon icon={faCalendarDays} style={[styles.iconButtonIcon]} size={iconSize} />
@@ -43,7 +43,7 @@ export default function AppScreenIconButtons(props: AppScreenIconButtonsProps) {
                     <FontAwesomeIcon icon={faMessage} style={[styles.iconButtonIcon]} size={iconSize} />
                 </View>
                 {hasMessages && <View style={styles.alert} />}
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </View>
     )
 }

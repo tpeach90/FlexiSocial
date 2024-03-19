@@ -2,10 +2,11 @@ import { NavigationContainer } from "@react-navigation/native";
 import { ActivityIndicator, Text, View } from "react-native";
 import AuthStack from "./AuthStack";
 import { useSelector } from "react-redux";
-import AppStack from "./AppStack";
+import AppStack from "./MapStack";
 import DebugStack from "./DebugStack";
 import { State } from "../redux/state";
 import LoadingModal from "../assets/components/LoadingModal";
+import AppTabNavigator from "./AppTabNavigator";
 
 
 

@@ -46,7 +46,7 @@ export default function AppMenu(props: AppMenuProps) {
         }
 
         // no data??
-        if (error) {
+        else if (error) {
             Alert.alert(error.message);
         } else {
             Alert.alert("An unexpected error occurred.")
@@ -64,8 +64,8 @@ export default function AppMenu(props: AppMenuProps) {
         }
 
         Alert.alert("Sign out", "Are you sure you want to sign out?", [
-            {text:"Sign out", isPreferred:true, onPress:onConfirm},
-            {text:"Cancel"}
+            { text: "Cancel" },
+            { text: "Sign out", isPreferred: true, onPress: onConfirm },
         ])
     }, []);
 
