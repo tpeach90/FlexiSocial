@@ -15,8 +15,13 @@ interface UserTextRendererProps {
 
 export default function UserTextRenderer(props: UserTextRendererProps) {
 
-    function handleUrlPress(url: string, matchIndex : number) {
-        Linking.openURL(url);
+    async function handleUrlPress(url: string, matchIndex : number) {
+        if (await Linking.canOpenURL(url)) {
+            Linking.openURL(url);
+        
+        } else if (await Linking.canOpenURL("http://" + url)) {
+            Linking.openURL("http://" + url)
+        }
     }
 
     function handleBracketedURLPress(matched: string, matchIndex : number) {

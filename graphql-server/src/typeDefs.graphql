@@ -33,6 +33,13 @@ enum UserEventRole {
     none
 }
 
+# does not include organizer roll.
+enum UserEventInterest {
+    interested
+    going
+    none
+}
+
 enum UserRole {
     standard
     moderator
@@ -45,6 +52,7 @@ type SensitiveUserInfo {
     # eventsGoing: [Event!]
     # eventsInterested: [Event!]
     user: User!
+    id: Int!
 }
 
 type User {
@@ -138,6 +146,7 @@ type Mutation {
     login(email: String!, password: String!): AuthPayload
     uploadPfp: UploadPfpPayload!
     createEvent(name: String!, description: String!, latitude: Float!, longitude:Float!, location: String!, time: String!, duration: Int!, capacity: Int): CreateEventPayload!
+    setInterestInEvent(eventId:Int!, interest:UserEventInterest!): MutationResult!
 }
 
 type AuthPayload {

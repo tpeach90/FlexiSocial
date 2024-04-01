@@ -1,5 +1,7 @@
 export type UserRole = 'standard' | 'moderator' | 'administrator'
-export type UserEventRole = 'interested' | 'going' | 'organizer' | "none"
+
+export type UserEventInterest = 'interested' | 'going' | "none"
+export type UserEventRole = UserEventInterest | 'organizer'
 
 export type User = {
     id: number,

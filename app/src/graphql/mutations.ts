@@ -24,3 +24,11 @@ export const CREATE_EVENT = gql`
         }
     }
 `
+
+export const SET_INTEREST = gql`
+    mutation SetInterestGoing($eventId: Int!, $interest: UserEventInterest!) {
+        setInterestInEvent(eventId: $eventId, interest: $interest) {
+            success
+        }
+    }
+`

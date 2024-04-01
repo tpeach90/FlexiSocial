@@ -61,6 +61,18 @@ export const GET_CHAT = gql`
     }
 `
 
+export const GET_MY_INTEREST_IN_EVENT = gql`
+    query GetMyInterestInEvent($eventId: Int!) {
+        me {
+            id
+            user {
+                id
+                roleInEvent(eventId: $eventId)
+            }
+        }
+    }
+`;
+
 export const GET_EVENT_AND_CHAT = gql`
     query GetEventAndChat($id: Int!, $maxChatMessages: Int!) {
         event(id: $id) {

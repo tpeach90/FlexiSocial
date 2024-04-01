@@ -9,13 +9,13 @@ import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, fa
 import LargeButton from "./LargeButton";
 import IconButton from "./IconButton";
 import UserTextRenderer from "../../utils/UserTextRenderer";
-import { useQuery } from "@apollo/client";
-import { GET_EVENT } from "../../graphql/queries";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import { GET_EVENT, GET_MY_INTEREST_IN_EVENT } from "../../graphql/queries";
 import { useNavigation } from "@react-navigation/native";
 import { AppStackParamList } from "../../navigation/paramLists";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import moment from "moment";
-
+import { SET_INTEREST } from "../../graphql/mutations";
 
 interface EventInfoNewProps {
     style?: ViewStyle
@@ -61,6 +61,8 @@ function toDurationString(seconds?: number): string | undefined {
  */
 export default function EventInfoNew(props: EventInfoNewProps) {
 
+    const isSignedIn = useSelector((state: State) => !!state.persistent.userToken)
+
     // get data.
     const { loading: eventLoading, error: eventError, data: eventData } = useQuery(GET_EVENT, {
         variables: {
@@ -69,19 +71,70 @@ export default function EventInfoNew(props: EventInfoNewProps) {
         skip: !props.eventId
     });
 
+    // get the current user's interest in the event, if they are signed in.
+    const {loading: interestLoading, error:interestError, data: interestData} = useQuery(GET_MY_INTEREST_IN_EVENT, {
+        variables: {
+            eventId: props.eventId
+        },
+        skip: !props.eventId || !isSignedIn
+    })
+
+    // mutation for the i'm going/i'm interested buttons
+    const [setInterest, { loading: setInterestLoading}] = useMutation(SET_INTEREST, {
+        variables: {
+            eventId: props.eventId
+        },
+        // update client cache.
+        // change the result of GET_MY_INTEREST_IN_EVENT query from above without having to re-fetch.
+        update(cache, {data, errors}, {variables}) {
+            if ((!errors || errors.length == 0) && variables?.interest && interestData?.me?.user?.id && data?.setInterestInEvent?.success) {
+                cache.writeQuery({
+                    query: GET_MY_INTEREST_IN_EVENT,
+                    variables: {
+                        eventId: variables.eventId
+                    },
+                    data: {
+                        me: {
+                            id: interestData.me.user.id,
+                            user: {
+                                id: interestData.me.user.id,
+                                roleInEvent: variables.interest
+                            }
+                        }
+                    },
+                });
+            }
+        },
+    });
+
+
+
+
     const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
     function imGoingPressed() {
-        console.log("I'm going");
+        const currentInterest = interestData?.me?.user?.roleInEvent;
+        if (!setInterestLoading && currentInterest && currentInterest != "organizer") {
+            if (currentInterest == "going") {
+                setInterest({ variables: { interest: "none" } });
+            } else {
+                setInterest({ variables: { interest: "going" } });
+            }
+        }
     }
     function imInterestedPressed() {
-        console.log("I'm interested");
-    }
-    function eventOptionsPressed() {
-        console.log("Event options")
+        const currentInterest = interestData?.me?.user?.roleInEvent;
+        if (!setInterestLoading && currentInterest && currentInterest != "organizer") {
+            if (currentInterest == "interested") {
+                setInterest({ variables: { interest: "none" } });
+            } else {
+                setInterest({ variables: { interest: "interested" } });
+            }
+        }
     }
     function navigateToEventOrganizer() {
-        navigation.navigate("UserScreen", {id: eventData.event.creator.id})
+        if (eventData?.event?.creator?.id)
+            navigation.navigate("UserScreen", {id: eventData.event.creator.id})
     }
     if (!props.eventId) {
         return <Text>No event.</Text>
@@ -145,10 +198,44 @@ export default function EventInfoNew(props: EventInfoNewProps) {
                 </View>
             </View>
 
-            <View style={styles.largeButtonsContainer} >
-                <LargeButton onPress={imGoingPressed} text="I'm going!" />
-                <LargeButton onPress={imInterestedPressed} text="I'm interested" />
-            </View>
+            {interestData?.me?.user?.roleInEvent != "organizer" &&
+                <View style={styles.largeButtonsContainer} >
+                    {/* <Text>Current status: {interestData?.me?.user?.roleInEvent}</Text> */}
+                    { 
+                        [
+                            {
+                                onPress: imGoingPressed,
+                                litUpWhen: interestData?.me?.user?.roleInEvent == "going",
+                                text: "I'm going!"
+                            },
+                            {
+                                onPress: imInterestedPressed,
+                                litUpWhen: interestData?.me?.user?.roleInEvent == "interested",
+                                text: "I'm interested"
+                            }
+                        ].map(({onPress, litUpWhen, text}, i) => 
+                            <LargeButton
+                                onPress={onPress}
+                                // make green if selected.
+                                style={litUpWhen ? {backgroundColor: colors.secondary} : {}}
+                                textStyle={litUpWhen ? {color: colors.primary} : {}}
+                                text={text}
+                                // display icons at the right.
+                                atRight={
+                                    litUpWhen ?
+                                        <FontAwesomeIcon icon={faCheck} color={colors.primary} /> :
+                                        undefined
+                                }
+                                // active={!setInterestLoading}
+                                key={i}
+                            />
+                        )
+                    }
+                </View>
+            }
+            {interestData?.me?.user?.roleInEvent == "organizer" &&
+                <Text style={styles.youAreAnOrganizerText}>You are an organizer of this event.</Text>
+            }
 
         </View>
     )
@@ -214,5 +301,14 @@ const styles = StyleSheet.create({
     },
     description: {
         paddingVertical: 15
+    },
+    youAreAnOrganizerText: {
+        ...universalStyles.h2,
+        alignSelf: "center", 
+        color: colors.black, 
+        backgroundColor: colors.secondary,
+        paddingHorizontal:10,
+        borderRadius:10,
+        marginTop: 10,
     }
 })

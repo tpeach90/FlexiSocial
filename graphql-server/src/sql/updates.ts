@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import { GraphQLContext } from "../context";
 
-import { Event as EventObj, User, UserEventRole } from "../types"
+import { Event as EventObj, User, UserEventInterest, UserEventRole } from "../types"
 import { tileToBBox } from "../tiles";
 import { zip } from "underscore";
 import * as EmailValidator from 'email-validator';
@@ -199,5 +199,54 @@ export async function createEvent(client: PoolClient, event:{
         await client.query("ROLLBACK");
         throw e;
     } 
+
+}
+
+
+export async function setInterestInEvent(client: PoolClient, userId: number, eventId:number, interest:UserEventInterest) {
+    
+    {
+        // check that the event exists.
+        const query = `
+            SELECT NULL FROM Events
+            WHERE Id = $1
+        `
+        const result = await client.query({ rowMode: "array", text: query }, [eventId]);
+        if (result.rows.length != 1) {
+            throw new GraphQLError(`Event with id ${eventId} does not exist`)
+        }
+    }
+
+    {
+        // check that the user is not an organizer of this event.
+        const query = `
+            SELECT Role FROM UserEventRoles
+            WHERE UserId=$1 AND EventId=$2
+        `
+        const result = await client.query({ rowMode: "array", text: query }, [userId, eventId]);
+        if (result.rows.length == 1 && result.rows[0][0] == "organizer") {
+            throw new GraphQLError("You are already an organizer of this event")
+        }
+    }
+
+
+    // update
+    if (interest == "none") {
+        const update = `
+            DELETE FROM UserEventRoles
+            WHERE UserId=$1 AND EventId=$2
+        `
+        await client.query({ rowMode: "array", text: update }, [userId, eventId]);
+    } else {
+        const update = `
+            INSERT INTO UserEventRoles (UserId, EventId, Role)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (UserId, EventId) DO UPDATE
+            SET Role = $4
+        `
+        await client.query({ rowMode: "array", text: update }, [userId, eventId, interest, interest]);
+    }
+
+
 
 }

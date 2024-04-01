@@ -9,7 +9,7 @@ import { GraphQLError } from 'graphql';
 import { checkEmailAndPassword, getChatMessage, getChatMessageCount, getEvent, getEventIdsInTiles, getEventIdsOrganizedByUser, getEventStats, getEvents, getNumEventsOrganizedByUser, getSensitiveUserInfo, getUser, queryChatMessages } from './sql/queries';
 import { TimestampResolver, TimestampTypeDefinition } from 'graphql-scalars';
 import { bboxToIntersectedTiles } from './tiles';
-import { createEvent, createProfilePictureUploadLink, createUser } from './sql/updates';
+import { createEvent, createProfilePictureUploadLink, createUser, setInterestInEvent } from './sql/updates';
 
 // [] means list
 //  ! means non-nullable
@@ -30,11 +30,19 @@ export const schema = createSchema<GraphQLContext>({
             none: "none"
         },
 
+        UserEventInterest: {
+            interested: "interested",
+            going: "going",
+            none: "none"
+        },
+
         UserRole: {
             standard: "standard",
             moderator: "moderator",
             administrator: "administrator"
         },
+
+        
 
         Query: {
             // hello: () => 'world',
@@ -202,14 +210,24 @@ export const schema = createSchema<GraphQLContext>({
 
                 return {eventId}
 
+            },
+
+            setInterestInEvent: async (_, {eventId, interest}, {userContext, client}) => {
+
+                const userId = await userContext.getId();
+                if (!userId) throw new GraphQLError("Not authorized")
+
+                await setInterestInEvent(client, userId, eventId, interest)
+
+                return {}
+
             }
-
-
         },
 
-        // MutationResult: {
-        //     success: true
-        // }
+
+        MutationResult: {
+            success: () => true
+        }
     }
 })
 

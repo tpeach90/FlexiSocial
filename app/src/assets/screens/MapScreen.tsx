@@ -9,7 +9,6 @@ import TagButton from "../components/TagButton";
 import { addMarkers, setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
 import MapScreenTagBar from "../components/MapScreenTagBar";
 import EventInfo from "../components/EventInfo";
-import EventFullInfoPanel from "../components/EventFullInfoPanel";
 import {  useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GetLocation from "react-native-get-location";
 import Geolocation from "@react-native-community/geolocation";

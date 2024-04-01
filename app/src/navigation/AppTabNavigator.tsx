@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faBars, faCalendarDays, faMapLocation, faMapLocationDot, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import MapScreen from '../assets/screens/MapScreen';
+import LinearGradient from 'react-native-linear-gradient';
 
 export default function AppTabNavigator() {
 
@@ -24,7 +25,13 @@ export default function AppTabNavigator() {
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
-                tabBarBackground: () => <View style={styles.tabBarBackground}/>,
+                tabBarBackground: () => (
+                    <LinearGradient
+                        style={[styles.tabBarBackground]}
+                        colors={["#0000", "#0003", "#0003"]}
+                        locations={[0, 0.8, 1]}
+                    />
+                ),
                 tabBarActiveTintColor:colors.white,
                 tabBarInactiveTintColor:colors.gray,
                 tabBarBadgeStyle:{backgroundColor:colors.notification, color:colors.white, fontWeight:'bold'},
