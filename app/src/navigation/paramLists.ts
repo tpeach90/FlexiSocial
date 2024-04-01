@@ -19,6 +19,7 @@ export type AppTabNavigatorParamList = {
     EventsScreen: undefined,
     MessagesScreen:undefined,
     OptionsScreen:undefined,
+    ProfileScreen:undefined,
 }
 
 export type DebugStackParamList = {

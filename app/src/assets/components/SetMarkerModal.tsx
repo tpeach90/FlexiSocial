@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Modal, PermissionsAndroid, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, PermissionsAndroid, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, googleMapsStyle, universalStyles } from '../../config/config';
@@ -93,7 +93,12 @@ export default function SetMarkerModal(props: SetMarkerModalProps) {
                             <Marker
                                 coordinate={tempMarker ?? props.location ?? /*make ts happy*/ {latitude:0, longitude:0}}
                                 pinColor={colors.primary}
-                            />
+                            >
+                                <Image
+                                    source={require("../images/marker.png")}
+                                    style={styles.marker}
+                                />
+                            </Marker>
                             :undefined
                         }
                     </MapView>
@@ -157,5 +162,11 @@ const styles = StyleSheet.create({
         marginRight:10,
         marginBottom: 10,
         marginTop:10
+    },
+    marker: {
+        height: 50,
+        width: 50,
+        resizeMode: "contain",
+        flex: 1
     }
 })

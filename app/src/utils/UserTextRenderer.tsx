@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { Linking, StyleSheet, ViewStyle } from 'react-native';
+import { Alert, Linking, StyleSheet, ViewStyle } from 'react-native';
 import ParsedText from 'react-native-parsed-text';
 import { colors, fonts, universalStyles } from '../config/config';
 
@@ -18,9 +18,8 @@ export default function UserTextRenderer(props: UserTextRendererProps) {
     async function handleUrlPress(url: string, matchIndex : number) {
         if (await Linking.canOpenURL(url)) {
             Linking.openURL(url);
-        
-        } else if (await Linking.canOpenURL("http://" + url)) {
-            Linking.openURL("http://" + url)
+        } else {
+            Alert.alert("Can't open url: " + url);
         }
     }
 

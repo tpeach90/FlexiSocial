@@ -2,7 +2,7 @@
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList, } from "../../navigation/paramLists";
-import { Alert, BackHandler, KeyboardAvoidingView, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, BackHandler, Image, KeyboardAvoidingView, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, googleMapsStyle, universalStyles } from "../../config/config";
 import IconButton from "../components/IconButton";
@@ -352,7 +352,12 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
                                                     <Marker
                                                         coordinate={marker}
                                                         pinColor={colors.primary}
-                                                    />
+                                                    >
+                                                        <Image
+                                                            source={require("../images/marker.png")}
+                                                            style={styles.marker}
+                                                        />
+                                                    </Marker>
                                                 }
                                             </MapView>
 
@@ -682,6 +687,13 @@ const styles = StyleSheet.create({
 
     drowdownChevron: {
         color: colors.primary,
+    },
+
+    marker: { 
+        height: 50, 
+        width: 50, 
+        resizeMode: 
+        "contain", flex: 1
     }
 
 })

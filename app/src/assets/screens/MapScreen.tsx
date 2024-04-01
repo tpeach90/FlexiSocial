@@ -1,9 +1,9 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AppStackParamList, AppTabNavigatorParamList} from "../../navigation/paramLists";
 import { useDispatch, useSelector } from "react-redux";
-import { Animated, BackHandler, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { Animated, BackHandler, PanResponder, PermissionsAndroid, ScrollView, StatusBar, StyleSheet, Text, View, Image} from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
-import { colors, googleMapsStyle } from "../../config/config";
+import { colors, googleMapsStyle, universalStyles } from "../../config/config";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import TagButton from "../components/TagButton";
 import { addMarkers, setEventInfoPanelStatus, setMapScreenToggle } from "../../redux/actions";
@@ -25,6 +25,8 @@ import SideMenu from "react-native-side-menu-updated";
 import { faDisplay } from "@fortawesome/free-solid-svg-icons";
 import MapScreenIconButtons from "../components/MapScreenIconButtons";
 import { useFocusEffect } from "@react-navigation/native";
+import MarkerImg from "../images/marker";
+import FastImage from "react-native-fast-image";
 
 const menuWidth = 300;
 
@@ -204,9 +206,20 @@ export default function MapScreen(props:MapScreenProps) {
                                         displayChat: false
                                     }
                                 })}
+                                // title={marker.name}
                             // TODO add a custom marker here!!
-                            // image={require("../../assets/images/ADD_MARKER_HERE_TODO.png")}
-                            />
+                                // image={require("../images/marker-low-res.png")}
+                            >
+                                <View style={styles.markerLabelContainer} >
+                                    <View style={styles.markerLabel}>
+                                        <Text style={styles.markerLabelText} numberOfLines={1}>{marker.name}</Text>
+                                    </View>
+                                    <Image 
+                                        source={require("../images/marker.png")}
+                                        style={styles.marker}
+                                    />
+                                </View>
+                            </Marker>
                         )}
 
                     </MapView>
@@ -302,5 +315,30 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
     },
+    markerLabel: {
+        backgroundColor: colors.primary, 
+        paddingHorizontal: 5, 
+        paddingVertical: 1, 
+        borderRadius: 999, 
+        marginBottom: 3,
+    },
+    markerLabelText: {
+        ...universalStyles.h2,
+        fontSize:12,
+        color: colors.white,
+        maxWidth:100,
+    },
+    markerLabelContainer: { 
+        flexDirection: "column", 
+        alignItems: "center", 
+        // height: 50 
+    },
+
+    marker: {
+        height: 50,
+        width: 50,
+        resizeMode:"contain",
+        flex: 1
+    }
 
 });

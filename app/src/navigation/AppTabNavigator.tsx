@@ -6,7 +6,7 @@ import { Alert, Animated, Image, PanResponder, SafeAreaView, ScrollView, StatusB
 import { AppTabNavigatorParamList } from './paramLists';
 import { colors, fonts, universalStyles } from '../config/config';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faBars, faCalendarDays, faMapLocation, faMapLocationDot, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCalendarDays, faMapLocation, faMapLocationDot, faMessage, faUser } from '@fortawesome/free-solid-svg-icons';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import MapScreen from '../assets/screens/MapScreen';
 import LinearGradient from 'react-native-linear-gradient';
@@ -67,6 +67,14 @@ export default function AppTabNavigator() {
                     tabBarIcon: ({ color }) => <FontAwesomeIcon icon={faMessage} color={color} size={20} />,
                     tabBarBadge:"6",
                     tabBarLabel: "Messages"
+                }}
+            />
+            <Tab.Screen
+                name="ProfileScreen"
+                component={View}
+                options={{
+                    tabBarIcon: ({ color }) => <FontAwesomeIcon icon={faUser} color={color} size={20} />,
+                    tabBarLabel: "Profile"
                 }}
             />
             <Tab.Screen

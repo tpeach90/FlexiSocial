@@ -731,7 +731,7 @@ export async function accountWithEmailExists(client: PoolClient, email:string): 
         throw new GraphQLError("Internal server error")
     }
 
-    return result.rows[0][0];
+    return result.rows[0][0] == 1;
 
 }
 
