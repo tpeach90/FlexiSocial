@@ -259,7 +259,8 @@ const styles = StyleSheet.create({
         flex: 1
     },
     statsItemRow: {
-        flexDirection: "row"
+        flexDirection: "row",
+        paddingLeft:5,
     },
     statsItem: {
         flex: 1,

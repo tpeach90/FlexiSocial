@@ -51,6 +51,13 @@ export type Action = {
 {
     type: "setLoading",
     payload: boolean
+} |
+{
+    type: "setEventMostRecentChatMessageViewed",
+    payload: {
+        eventId: number,
+        timestamp: string
+    }
 }
 
 
@@ -169,6 +176,18 @@ function persistentReducer(state: StatePersistentSlice = initialPersistentState,
                     toggles : {
                         ...state.mapScreen.toggles,
                         ...action.payload
+                    }
+                }
+            }
+        
+        case "setEventMostRecentChatMessageViewed":
+            return {
+                ...state,
+                events: {
+                    ...state.events,
+                    [action.payload.eventId]: {
+                        ...state.events[action.payload.eventId],
+                        mostRecentChatMessageViewed: action.payload.timestamp
                     }
                 }
             }

@@ -119,7 +119,19 @@ export const schema = createSchema<GraphQLContext>({
          */
         Chat: {
             event: ({eventId}, _ , {eventLoader}) => eventLoader.load(eventId),
-            count: ({eventId}, _, {client}) => getChatMessageCount(client, eventId),
+            count: ({eventId}, {since}, {client}) =>  {
+
+                if (since) {
+                    const sinceDate = Date.parse(since);
+                    if (isNaN(sinceDate)) {
+                        throw new GraphQLError("`since` not in date time string format")
+                    }
+                    return getChatMessageCount(client, eventId, {since:new Date(sinceDate)})
+                } else {
+                    return getChatMessageCount(client, eventId)
+                }
+
+            },
             messageQuery: async ({eventId}, params, {client}) => {
                 
                 const {count, hasMore, messageIds} = await queryChatMessages(client, { eventId , ...params})

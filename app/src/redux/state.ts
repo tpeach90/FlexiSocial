@@ -8,7 +8,12 @@ export type StatePersistentSlice = {
 
     mapScreen: {
         toggles: Record<Toggle,boolean>
-    }
+    },
+
+    // indexed by event id.
+    events: Record<number, {
+        mostRecentChatMessageViewed?: string
+    }>
 }
 export type StateNonPersistentSlice = {
     screenStack: ScreenStackOptions | null,
@@ -59,10 +64,11 @@ export const initialPersistentState: StatePersistentSlice = {
             thisWeek: true,
             thisMonth: true,
         }
-    }
+    },
+    events:{}
 };
 export const initialNonPersistentState: StateNonPersistentSlice = {
-    screenStack: "app",
+    screenStack: "debug",
     mapScreen: {
         markers:[],
         tilesLoaded:[],

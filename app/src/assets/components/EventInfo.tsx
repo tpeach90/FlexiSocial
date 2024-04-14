@@ -9,6 +9,7 @@ import { faCalendarDays, faCheck, faClock, faEllipsisVertical, faLocationDot, fa
 import LargeButton from "./LargeButton";
 import IconButton from "./IconButton";
 import UserTextRenderer from "../../utils/UserTextRenderer";
+import { toDurationString } from "../../utils/misc";
 
 type EventInfoContent = {
     title: string,
@@ -33,22 +34,7 @@ interface EventInfoProps {
 
 }
 
-function toDurationString(seconds?: number) : string | undefined {
 
-    if (!seconds) return undefined;
-
-    const hours = Math.floor(seconds / (60*60));
-    const minutes = Math.floor((seconds % (60 * 60)) /60);
-
-    var durationString = "";
-    durationString += hours + " hour"
-    if (hours != 1) durationString += "s"
-    if (minutes > 0) {
-        durationString += ", " + minutes + " minute"
-        if (minutes != 1) durationString += "s"
-    }
-    return durationString;
-}
 
 
 /**

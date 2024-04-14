@@ -25,9 +25,21 @@ export const GET_EVENT = gql`
                 goingCount
                 interestedCount
             }
+            chat {
+                count
+            }
         }
     }
+`
 
+export const GET_EVENT_CHAT_MESSAGE_COUNT_SINCE = gql`
+    query GetEvent($id: Int!, $since:String!) {
+        event(id: $id) {
+            chat {
+                count(since: $since)
+            }
+        }
+    }
 `
 
 export const GET_CHAT = gql`

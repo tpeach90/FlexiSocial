@@ -96,7 +96,7 @@ type EventStats {
 type Chat {
     eventID: Int!
     event: Event! # id of the event to which the chat belongs.
-    count: Int! # total number of messages
+    count(since:String): Int! # total number of messages
 
     messageQuery(
 

@@ -15,6 +15,9 @@ import { State } from "../../redux/state";
 import SideMenu from "react-native-side-menu-updated";
 import { Action } from "../../redux/reducer";
 import { client } from "../../utils/apolloClientConfig";
+import EventTile from "../components/EventTile";
+import StatsItem from "../components/StatsItem";
+import { faCalendar } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -33,6 +36,8 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
     const [newUserToken, setNewUserToken] = useState<string>("");
 
     const dispatch = useDispatch();
+
+    const [mostRecentChatMessageViewedEntryBoxValue, setMostRecentChatMessageViewedEntryBoxValue] = useState("");
 
 
 
@@ -57,8 +62,6 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
         // onMoveShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponderCapture: () => false,
     })).current;
-
-    console.log(userToken)
 
     function goToMyUserPage() {
         if (loading) return Alert.alert("loading");
@@ -86,7 +89,7 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
                 onChange={(isOpen) => setSideMenuOpen(isOpen)}
                 
             >  
-                <View style={{backgroundColor:"#FFF"}}>
+                <ScrollView style={{backgroundColor:"#FFF"}}>
                     <Text>This is the content.</Text>
                     <Text>The current user token is {userToken}</Text>
                     <TouchableOpacity onPress={goToMyUserPage}>
@@ -99,7 +102,29 @@ export const DebugScreen: React.FC<DebugScreenProps> = (props) => {
                     <TextInput value={newUserToken} onChangeText={(value) => setNewUserToken(value)}></TextInput>
                     <Text onPress={() => dispatch<Action>({type:"setUserToken", payload:{value:newUserToken}})}>Set the usertoken</Text>
                     <Text onPress={() => client.clearStore()}>Clear the apollo client cache</Text>
-                </View>
+                    
+                    <Text onPress={() => dispatch<Action>({type:"setEventMostRecentChatMessageViewed", payload: {eventId:1, timestamp: mostRecentChatMessageViewedEntryBoxValue}})}>Set the mostRecentChatMessageViewed date for event 1</Text>
+                    <TextInput onChangeText={setMostRecentChatMessageViewedEntryBoxValue} value={mostRecentChatMessageViewedEntryBoxValue}></TextInput>
+
+                    <EventTile
+                        style={{width:"95%", alignSelf: "center", marginTop: 20}}
+                        eventId={1}
+                        canEdit={true}
+                    />
+
+                    <EventTile
+                        style={{ width: "95%", alignSelf: "center", marginTop: 20 }}
+                        eventId={2}
+                        canEdit={true}
+                    />
+                    <EventTile
+                        style={{ width: "95%", alignSelf: "center", marginTop: 20 }}
+                        eventId={12}
+                        canEdit={true}
+                    />
+
+                    <StatsItem icon={faCalendar}></StatsItem>
+                </ScrollView>
 
             </SideMenu>
 

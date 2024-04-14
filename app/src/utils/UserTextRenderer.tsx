@@ -15,6 +15,9 @@ interface UserTextRendererProps {
 
 export default function UserTextRenderer(props: UserTextRendererProps) {
 
+    /**
+     * @todo Weird non-consistent behaviour between platforms. 
+     */
     async function handleUrlPress(url: string, matchIndex : number) {
         if (await Linking.canOpenURL(url)) {
             Linking.openURL(url);

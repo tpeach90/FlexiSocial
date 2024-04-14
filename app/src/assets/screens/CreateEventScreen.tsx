@@ -84,16 +84,16 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
             }
             const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
             return () => subscription.remove();
-        }, [])
+        }, [isDirty])
     );
 
-    function backOrCancel() {
+    const backOrCancel = useCallback(() => {
         if(isDirty) {
             Alert.alert("You have unsaved changes", "Quit creating event?", [{ text: "Cancel" }, { text: "Quit", onPress: () => navigation.goBack() }])
         } else {
             navigation.goBack();
         }
-    }
+    }, [isDirty]);
 
 
 

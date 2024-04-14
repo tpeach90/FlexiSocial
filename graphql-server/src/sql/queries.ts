@@ -132,17 +132,30 @@ export async function getEvents(client: PoolClient, ids: readonly number[]) {
  * @param eventId
  * @returns 
  */
-export async function getChatMessageCount(client: PoolClient, eventId: bigint): Promise<bigint | null> {
-    const query = `
-        SELECT COUNT(*)
-        FROM ChatMessages
-        WHERE eventId=$1  
-    `
+export async function getChatMessageCount(client: PoolClient, eventId: bigint, options?:{since?:Date}): Promise<bigint | null> {
 
-    const result = await client.query({ rowMode: "array", text: query }, [eventId]);
+    let result;
+
+    if (options?.since) {
+        const query = `
+            SELECT COUNT(*)
+            FROM ChatMessages
+            WHERE eventId=$1
+            AND time>$2
+        `
+        result = await client.query({ rowMode: "array", text: query }, [eventId, options.since]);
+    } else {
+        const query = `
+            SELECT COUNT(*)
+            FROM ChatMessages
+            WHERE eventId=$1
+        `
+        result = await client.query({ rowMode: "array", text: query }, [eventId]);
+    }
+
 
     if (!result.rows) {
-        console.error("Error for query: \n" + query)
+        console.error("Error for query: \n" + "getChatMessageCount")
         throw new GraphQLError("Internal server error")
     }
 
