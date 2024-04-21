@@ -24,19 +24,11 @@ git clone https://github.com/tpeach90/FlexiSocial.git
 The rest of this section is instructions on how to set up the parts of the stack.
 
 > ℹ️ **_NOTE:_**  
-> If you're not going to develop the backend and just want to run it, then the database and GraphQL server can both be run with [Docker](https://www.docker.com/products/docker-desktop/). A shell script and batch file are provided for the setup, and the following **Database** and **GraphQL server** sections can be skipped.
->
-> Navigate to the root of this repository using `cd`. Then, with Docker running,
->
+> If you are not developing the back end, I recommend you run it using [Docker Compose](https://docs.docker.com/compose/install/).  In the root directory of this repository, run:
 > ```bash
-> ./docker-setup-linux-macos.sh 
+> docker compose up
 > ```
-> 
-> or
->
-> ```bat
-> docker-setup-windows.bat
-> ```
+> This creates and runs containers for the database, GraphQL server, and file server. You will still need to do the *App* setup as detailed later, but the rest can be skipped.
 
 ### Database
 
@@ -55,7 +47,7 @@ docker build -t database-flexisocial-image ./database/
 Create and run the container. 
 
 > ℹ️ **_NOTE:_**  
-> If you plan on using Docker for the GraphQL server as well (not recommended), you will need to create a network so the database and server can communicate. This can be achieved with the command:
+> If you plan on using Docker for the GraphQL server as well, you will need to create a network so the database and server can communicate. This can be achieved with the command:
 > ```bash
 > docker network create flexisocial-net
 > ```

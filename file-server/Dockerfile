@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-ENV PGHOST='database-flexisocial'
+ENV PGHOST='database'
 ENV PGPORT='5432'
 ENV PGDATABASE='flexisocial'
 ENV PGUSER='flexisocial-user'

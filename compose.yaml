@@ -1,0 +1,21 @@
+services:
+
+  database:
+    image: flexisocial/database
+    build: ./database
+    ports:
+      - "5432:5432"
+
+  file-server:
+    image: flexisocial/file-server
+    build: ./file-server
+    ports:
+      - "3000:3000"
+  
+  graphql-server:
+    image: flexisocial/graphql-server
+    build: ./graphql-server
+    ports:
+      - "4000:4000"
+
+  

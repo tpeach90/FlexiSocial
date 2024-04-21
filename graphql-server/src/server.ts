@@ -2,7 +2,7 @@ import { createServer } from 'node:http'
 import { createSchema, createYoga } from 'graphql-yoga'
 import { schema } from './schema'
 import { GraphQLContext, createContext, destroyContext } from "./context"
-import { pool } from './connection'
+import { pool, withClient } from './connection'
 
 export async function makeServer() {
     // Create a Yoga instance with a GraphQL schema.
@@ -25,13 +25,9 @@ export async function makeServer() {
     const server = createServer(yoga)
 
     // check that we have a connection to the database.
-    try {
-        pool.query("SELECT NOW()")
-        console.log("Got database connection")
-    } catch (e) {
-        console.error("Failed to get database connection.")
-        throw e;
-    }
+    withClient(client => client.query("SELECT NOW()"))
+        .then(() => console.log(("Got database connection")))
+        .catch(() => console.warn("Failed to get database connection? Maybe it's still starting."))
 
     return server;
 }

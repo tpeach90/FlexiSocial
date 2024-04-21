@@ -4,6 +4,7 @@ import path from "path";
 // import { connection } from "./connection";
 import {app} from "./routes";
 import {STORE, port} from "./config"
+import { withClient } from "./connection";
 
 
 async function start() {
@@ -41,6 +42,12 @@ async function start() {
     //     throw e;
     // }
     // console.log("Got database connection");
+
+    // check that we have a connection to the database.
+
+    withClient(() => console.warn("Falied to get database connection??"), client => {
+        client.query("SELECT NOW()")
+    })
 
 
     // start server
