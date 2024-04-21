@@ -66,7 +66,7 @@ docker exec -it database-flexisocial psql -U flexisocial-user flexisocial
 
 ### GraphQL server
 
-Below is the instructions to run directly on your machine. There is also a Dockerfile for the Graphql server, but this is not recommended.
+Below is the instructions to run directly on your machine. Alternatively there is a Dockerfile for the Graphql server.
 
 Install [Node](https://nodejs.org/en) if not already. The LTS version is probably fine, but in case you have issues, the version used to develop this app is `v18.17.1`.
 
@@ -91,9 +91,6 @@ PGSCHEMA=public
 ```
 
 Start the server.
-
-> ℹ️ **_NOTE:_** 
-> This will result in an error if the database is not running or the environment variables are not set properly.
 
 ```bash
 npm start
@@ -125,6 +122,8 @@ npm start
 ```
 
 ### App
+
+These instructions are currently for Android only.
 
 Follow the below instructions to set up React Native using the React Native CLI. Again, the LTS version of Node is probably fine, but in case you experience issues, the version used to develop was `v18.17.1`.
 
