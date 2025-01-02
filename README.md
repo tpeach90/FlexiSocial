@@ -2,6 +2,11 @@
 
 Event based social media app.
 
+Creating an account | Finding events | Creating an event
+:-:|:-:|:-:
+![Creating an account](./docs/create_user.gif) | ![Finding events](./docs/events_on_map.gif) | ![Creating an event](./docs/create_event.gif)
+
+
 ## Parts of the application
 
 Below is an outline of the application technology stack.
@@ -19,6 +24,14 @@ Clone this repository onto your machine (or download and unpack the zip file).
 
 ```bash
 git clone https://github.com/tpeach90/FlexiSocial.git
+```
+
+Add Google Maps Platform API key to [./app/android/app/src/main/AndroidManifest.xml](/app/android/app/src/main/AndroidManifest.xml)
+```xml
+<meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="<YOUR API KEY>"
+/>
 ```
 
 The rest of this section is instructions on how to set up the parts of the stack.
